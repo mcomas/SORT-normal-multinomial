@@ -51,9 +51,10 @@ set.seed(SEED)
 M0 = exact(X, MU, SIGMA, B)
 R = replicate(1000, simulation(N = 1000, X, MU, SIGMA, B), simplify = FALSE)
 
-RESULTS = list()
-M_1 = sapply(R, function(r) sapply(r, function(r_) r_[,-(1:DIM)] - M0[,-(1:DIM)], simplify = "array"), simplify = "array")
-M_2 = sapply(R, function(r) sapply(r, function(r_) r_[,1:DIM] - M0[,1:DIM], simplify = "array"), simplify = "array")
+
+extract = function(what) sapply(R, function(r, what_) sapply(r, what_, simplify = "array"), what, simplify = "array")
+M_1 = extract(function(r_) r_[,-(1:DIM)] - M0[,-(1:DIM)])
+M_2 = extract(function(r_) r_[,1:DIM] - M0[,1:DIM])
 
 if(DIM == 1){
   M_1_mean = apply(M_1, 1, mean)
@@ -69,6 +70,7 @@ if(DIM == 1){
   M_2_sd = apply(M_2, 1:3, sd)
 }
 
+RESULTS = list()
 RESULTS[['M1']] = list('mean' = M_1_mean, 'sd' = M_1_sd)
 RESULTS[['M2']] = list('mean' = M_2_mean, 'sd' = M_2_sd)
 

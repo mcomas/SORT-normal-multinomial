@@ -2,8 +2,8 @@ SIGMA := 0.2 1 5 25
 MU := 0 1 2
 SIZE := 1 10 100
 AGREEMENT := FALSE TRUE
-FIRST := 1
-LAST := 10
+#FIRST := 1
+#LAST := 1
 SEED := $(shell seq ${FIRST} ${LAST})
 
 GENERATION = $(foreach size,$(SIZE),$(foreach mu,$(MU),$(foreach sigma,$(SIGMA),$(foreach agreement,$(AGREEMENT),$(foreach seed,$(SEED), $(shell printf 'SIZE_%s-MU_%s-SIGMA_%s-AGREEMENT_%s-SEED_%s' $(size) $(mu) $(sigma) $(agreement) $(seed)))))))
