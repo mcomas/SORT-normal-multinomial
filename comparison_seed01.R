@@ -1,7 +1,7 @@
 dir.create('comparison', showWarnings = FALSE)
 
-# Generated with
-# make -f comparison.make FIRST=1 LAST=1 -n | sed -e "s/Rscript -e //" -e  "s/'//g" -e $'s/; /\\\n/g'
+# Generated using command:
+# make -f comparison.make FIRST=1 LAST=1 -n | sed -e $'s/Rscript -e \\\'/\\\n/' -e  "s/'//g" -e $'s/; /\\\n/g'
 PATTERN="SIZE_1-MU_0-SIGMA_0.2-AGREEMENT_FALSE-SEED_1"
 source("comparison_parameters.R")
 source("comparison_simulation.R")
