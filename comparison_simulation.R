@@ -2,8 +2,6 @@ library(coda.base)
 library(coda.count)
 library(randtoolbox)
 
-DIM = length(MU)
-
 exact = function(X, MU, SIGMA, B, order = 1000){
   Norm = coda.count::lrnm_posterior_approx(X, MU, SIGMA, B)
   
