@@ -2,6 +2,8 @@ library(coda.base)
 library(coda.count)
 library(randtoolbox)
 
+QUASI_INIT = FALSE
+
 exact = function(X, MU, SIGMA, B, order = 1000){
   Norm = coda.count::lrnm_posterior_approx(X, MU, SIGMA, B)
   
@@ -26,8 +28,12 @@ simulation = function(N, X, MU, SIGMA, B){
                                  MU, invSIGMA, 
                                  B, Z = cbind(Z2,-Z2), rep(0, DIM))
 
-  Z3 = tryCatch(matrix(halton(n = N, normal = TRUE, init = FALSE), DIM),
-                error = function(e) matrix(halton(n = N, normal = TRUE, init = TRUE), DIM))
+  if(!QUASI_INIT){
+    Z3 = matrix(halton(n = N, normal = TRUE, init = TRUE), DIM)
+    QUASI_INIT <<- TRUE
+  }else{
+    Z3 = matrix(halton(n = N, normal = TRUE, init = FALSE), DIM)
+  }
   M4 = c_moments_lrnm_montecarlo(X,
                                  Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
                                  MU, invSIGMA, 
