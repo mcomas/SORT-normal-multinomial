@@ -4,13 +4,18 @@ library(randtoolbox)
 
 QUASI_INIT = FALSE
 
-exact = function(X, MU, SIGMA, B, order = 1000){
+exact_hermite = function(X, MU, SIGMA, B, order){
   Norm = coda.count::lrnm_posterior_approx(X, MU, SIGMA, B)
   
   M = c_moments_lrnm_hermite(X, 
                              Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
                              MU, SIGMA, 
                              B, order = order, rep(0, DIM))
+  M
+}
+exact_mcmc = function(X, MU, SIGMA, B, SIM = 100000){
+  h = c_rlrnm_posterior(SIM, X, MU, SIGMA, B, r = 10)
+  M = cbind(crossprod(h,h)/SIM, colMeans(h))
   M
 }
 simulation = function(N, X, MU, SIGMA, B){
@@ -28,12 +33,14 @@ simulation = function(N, X, MU, SIGMA, B){
                                  MU, invSIGMA, 
                                  B, Z = cbind(Z2,-Z2), rep(0, DIM))
 
-  if(!QUASI_INIT){
-    Z3 = matrix(halton(n = N, normal = TRUE, init = TRUE), DIM)
-    QUASI_INIT <<- TRUE
-  }else{
-    Z3 = matrix(halton(n = N, normal = TRUE, init = FALSE), DIM)
-  }
+  # if(!QUASI_INIT){
+  #   Z3 = matrix(t(halton(n = N, normal = TRUE, init = TRUE)), nrow = DIM)
+  #   QUASI_INIT <<- TRUE
+  # }else{
+  #   Z3 = matrix(t(halton(n = N, normal = TRUE, init = FALSE)), nrow = DIM)
+  # }
+  # Z3 = matrix(t(sobol(n = N, normal = TRUE, scrambling = 1)), nrow = DIM)
+  Z3 = matrix(t(halton(n = N, dim = DIM, normal = TRUE)), nrow = DIM)
   M4 = c_moments_lrnm_montecarlo(X,
                                  Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
                                  MU, invSIGMA, 
@@ -52,7 +59,11 @@ simulation = function(N, X, MU, SIGMA, B){
 ##############
 
 set.seed(SEED)
-M0 = exact(X, MU, SIGMA, B)
+if(DIM <= 3){
+  M0 = exact_hermite(X, MU, SIGMA, B, ORDER)
+}else{
+  M0 = exact_mcmc(X, MU, SIGMA, B)
+}
 R = replicate(1000, simulation(N = 1000, X, MU, SIGMA, B), simplify = FALSE)
 
 
@@ -75,8 +86,16 @@ if(DIM == 1){
 }
 
 RESULTS = list()
-RESULTS[['M1']] = list('mean' = M_1_mean, 'sd' = M_1_sd)
-RESULTS[['M2']] = list('mean' = M_2_mean, 'sd' = M_2_sd)
+if(DIM == 1){
+  RESULTS[['M1']] = list('mean' = abs(M_1_mean), 'sd' = M_1_sd)
+  RESULTS[['M2']] = list('mean' = abs(M_2_mean), 'sd' = M_2_sd)
+}else{
+  RESULTS[['M1']] = list('mean' = apply(abs(M_1_mean), 2, max), 
+                         'sd' = apply(abs(M_1_sd), 2, max))
+  RESULTS[['M2']] = list('mean' = apply(abs(M_2_mean), 3, max), 
+                         'sd' = apply(abs(M_2_sd), 3, max))
+}
+
 
 if(FALSE){
   boxplot(moment_1)
