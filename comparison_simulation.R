@@ -2,47 +2,47 @@ library(coda.base)
 library(coda.count)
 library(randtoolbox)
 
-QUASI_INIT = FALSE
-
 exact = function(X, MU, SIGMA, B, order = 1000){
   Norm = coda.count::lrnm_posterior_approx(X, MU, SIGMA, B)
   
-  M = c_moments_lrnm_hermite(X, 
-                             Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
-                             MU, SIGMA, 
-                             B, order = order, rep(0, DIM))
-  M
+  R_exact = c_moments_lrnm_hermite(X, 
+                                   Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
+                                   MU, SIGMA, 
+                                   B, order = order, rep(0, DIM))
+  R_exact
 }
 simulation = function(N, X, MU, SIGMA, B){
   Norm = coda.count::lrnm_posterior_approx(X, MU, SIGMA, B)
   invSIGMA = solve(SIGMA)
-  Z1 = matrix(rnorm(DIM*N), nrow = DIM)
-  M2 = c_moments_lrnm_montecarlo(X,
-                                 Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
-                                 MU, invSIGMA, 
-                                 B, Z = Z1, rep(0, DIM))
+  Z_pseudo = matrix(rnorm(DIM*N), nrow = DIM)
+  R_MC = c_moments_lrnm_montecarlo(X,
+                                   Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
+                                   MU, invSIGMA, 
+                                   B, Z = Z_pseudo, rep(0, DIM))
   
-  Z2 = matrix(rnorm(DIM*N/2), nrow = DIM)
-  M3 = c_moments_lrnm_montecarlo(X,
-                                 Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
-                                 MU, invSIGMA, 
-                                 B, Z = cbind(Z2,-Z2), rep(0, DIM))
-
-  if(!QUASI_INIT){
-    Z3 = matrix(halton(n = N, normal = TRUE, init = TRUE), DIM)
-    QUASI_INIT <<- TRUE
-  }else{
-    Z3 = matrix(halton(n = N, normal = TRUE, init = FALSE), DIM)
-  }
-  M4 = c_moments_lrnm_montecarlo(X,
-                                 Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
-                                 MU, invSIGMA, 
-                                 B, Z = Z3, rep(0, DIM))
+  Z_av = matrix(rnorm(DIM*N/2), nrow = DIM)
+  Z_av = cbind(Z_av,-Z_av)
+  R_MC.AV = c_moments_lrnm_montecarlo(X,
+                                      Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
+                                      MU, invSIGMA, 
+                                      B, Z = Z_av, rep(0, DIM))
+  
+  # if(!QUASI_INIT){
+  #   Z_quasi = matrix(halton(n = N, normal = TRUE, init = TRUE), DIM)
+  #   QUASI_INIT <<- TRUE
+  # }else{
+  #   Z_quasi = matrix(halton(n = N, normal = TRUE, init = FALSE), DIM)
+  # }
+  Z_quasi = matrix(halton(n = N, normal = TRUE), DIM)
+  R_QMC = c_moments_lrnm_montecarlo(X,
+                                    Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
+                                    MU, invSIGMA, 
+                                    B, Z = Z_quasi, rep(0, DIM))
   
   h = c_rlrnm_posterior(N, X, MU, SIGMA, B, r = 10)
-  M5 = cbind(crossprod(h,h)/N, colMeans(h))
+  R_MCMC = cbind(crossprod(h,h)/N, colMeans(h))
   
-  res = list(M2,M3,M4,M5)
+  res = list(R_MC,R_MC.AV,R_QMC,R_MCMC)
   names(res) = c('MC', 'MC-AV', 'QMC', 'MCMC')
   res
 }
