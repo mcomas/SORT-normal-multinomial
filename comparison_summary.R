@@ -2,28 +2,30 @@ library(data.table)
 
 fls = list.files('comparison')
 
-pattern_build = "SIZE_(.+)-MU_(.+)-SIGMA_(.+)-AGREEMENT_(.+)-SEED_([0-9]+)"
+pattern_build = "DIM_(.+)-SIZE_(.+)-NORM_(.+)-VAR_(.+)-AGREEMENT_(.+)-SEED_([0-9]+)"
 data = rbindlist(lapply(fls, function(fl){
+  # print(fl)
   load(file.path('comparison', fl))
   
   PATTERN = gsub('.RData', '', fl)
   d = data.table(as.data.frame(RESULTS), keep.rownames = TRUE)
-  d[,SIZE := as.integer(sub(pattern_build, "\\1", PATTERN))]
-  d[,MU := as.numeric(sub(pattern_build, "\\2", PATTERN))]
-  d[,SIGMA := as.matrix(as.numeric(sub(pattern_build, "\\3", PATTERN)))]
-  d[,AGREEMENT := as.logical(sub(pattern_build, "\\4", PATTERN))]
-  d[,SEED := as.integer(sub(pattern_build, "\\5", PATTERN))]
+  d[,DIM := as.integer(sub(pattern_build, "\\1", PATTERN))]
+  d[,SIZE := as.integer(sub(pattern_build, "\\2", PATTERN))]
+  d[,NORM := as.numeric(sub(pattern_build, "\\3", PATTERN))]
+  d[,VAR := as.matrix(as.numeric(sub(pattern_build, "\\4", PATTERN)))]
+  d[,AGREEMENT := as.logical(sub(pattern_build, "\\5", PATTERN))]
+  d[,SEED := as.integer(sub(pattern_build, "\\6", PATTERN))]
   d
 }))
 
 library(ggplot2)
 dplot = data[,.(m=median(M1.mean), q1=quantile(M1.mean, 0.25), q3=quantile(M1.mean, 0.75)),
-             .(rn, SIZE, MU, SIGMA, AGREEMENT)]
+             .(rn, DIM, SIZE, NORM, VAR, AGREEMENT)]
 
 ggplot(data=dplot) +
   geom_hline(yintercept = 0, col = 'red') +
   geom_boxplot(aes(x=rn,y=m)) +
-  facet_wrap(~SIGMA, scales = 'free_y') +
+  facet_wrap(~DIM+VAR, scales = 'free_y') +
   theme_minimal()
 
 ggplot(data=dplot) +

@@ -1,7 +1,7 @@
 library(coda.base)
 library(coda.count)
 
-PATTERN = "DIM_1-SIZE_3-NORM_3-VAR_4-AGREEMENT_TRUE-SEED_1"
+# PATTERN = "DIM_2-SIZE_100-NORM_0-VAR_4-AGREEMENT_TRUE-SEED_1"
 pattern_build = "DIM_(.+)-SIZE_(.+)-NORM_(.+)-VAR_(.+)-AGREEMENT_(.+)-SEED_([0-9]+)"
 
 DIM = as.integer(sub(pattern_build, "\\1", PATTERN))
@@ -26,6 +26,6 @@ if(AGREEMENT){
 }
 B = ilr_basis(DIM+1)
 
-
+ORDER = 50
 source("comparison_simulation.R")
-RESULTS
+

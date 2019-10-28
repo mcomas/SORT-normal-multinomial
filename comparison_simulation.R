@@ -2,7 +2,10 @@ library(coda.base)
 library(coda.count)
 library(randtoolbox)
 
-exact = function(X, MU, SIGMA, B, order = 1000){
+
+# QUASI_INIT = FALSE
+
+exact_hermite = function(X, MU, SIGMA, B, order){
   Norm = coda.count::lrnm_posterior_approx(X, MU, SIGMA, B)
   
   R_exact = c_moments_lrnm_hermite(X, 
@@ -10,6 +13,11 @@ exact = function(X, MU, SIGMA, B, order = 1000){
                                    MU, SIGMA, 
                                    B, order = order, rep(0, DIM))
   R_exact
+}
+exact_mcmc = function(X, MU, SIGMA, B, SIM = 100000){
+  h = c_rlrnm_posterior(SIM, X, MU, SIGMA, B, r = 10)
+  R_approx = cbind(crossprod(h,h)/SIM, colMeans(h))
+  R_approx
 }
 simulation = function(N, X, MU, SIGMA, B){
   Norm = coda.count::lrnm_posterior_approx(X, MU, SIGMA, B)
@@ -33,6 +41,7 @@ simulation = function(N, X, MU, SIGMA, B){
   # }else{
   #   Z_quasi = matrix(halton(n = N, normal = TRUE, init = FALSE), DIM)
   # }
+  
   Z_quasi = matrix(halton(n = N, normal = TRUE), DIM)
   R_QMC = c_moments_lrnm_montecarlo(X,
                                     Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
@@ -52,7 +61,11 @@ simulation = function(N, X, MU, SIGMA, B){
 ##############
 
 set.seed(SEED)
-M0 = exact(X, MU, SIGMA, B)
+if(DIM <= 3){
+  M0 = exact_hermite(X, MU, SIGMA, B, ORDER)
+}else{
+  M0 = exact_mcmc(X, MU, SIGMA, B)
+}
 R = replicate(1000, simulation(N = 1000, X, MU, SIGMA, B), simplify = FALSE)
 
 
@@ -75,8 +88,16 @@ if(DIM == 1){
 }
 
 RESULTS = list()
-RESULTS[['M1']] = list('mean' = M_1_mean, 'sd' = M_1_sd)
-RESULTS[['M2']] = list('mean' = M_2_mean, 'sd' = M_2_sd)
+if(DIM == 1){
+  RESULTS[['M1']] = list('mean' = abs(M_1_mean), 'sd' = M_1_sd)
+  RESULTS[['M2']] = list('mean' = abs(M_2_mean), 'sd' = M_2_sd)
+}else{
+  RESULTS[['M1']] = list('mean' = apply(abs(M_1_mean), 2, max), 
+                         'sd' = apply(abs(M_1_sd), 2, max))
+  RESULTS[['M2']] = list('mean' = apply(abs(M_2_mean), 3, max), 
+                         'sd' = apply(abs(M_2_sd), 3, max))
+}
+
 
 if(FALSE){
   boxplot(moment_1)
