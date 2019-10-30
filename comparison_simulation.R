@@ -1,11 +1,4 @@
-library(coda.base)
-library(coda.count)
-library(randtoolbox)
-
-
-# QUASI_INIT = FALSE
-
-exact_hermite = function(X, MU, SIGMA, B, order){
+exact_hermite = function(X, MU, SIGMA, B, order = 50){
   Norm = coda.count::lrnm_posterior_approx(X, MU, SIGMA, B)
   
   R_exact = c_moments_lrnm_hermite(X, 
@@ -19,7 +12,26 @@ exact_mcmc = function(X, MU, SIGMA, B, SIM = 100000){
   R_approx = cbind(crossprod(h,h)/SIM, colMeans(h))
   R_approx
 }
-simulation = function(N, X, MU, SIGMA, B){
+
+simulation = function(DIM, SIZE, NORM, VAR, AGREEMENT, B = ilr_basis(DIM+1), N = 1000){
+  MU = rnorm(DIM)
+  MU = MU/sqrt(sum(MU^2)) * NORM
+  CORR = cov2cor(as.matrix(rWishart(1, DIM^2, diag(DIM))[,,1]))
+  SIGMA = CORR * VAR
+  if(AGREEMENT){
+    X = rmultinomial(1, SIZE, composition(MU))
+  }else{
+    X = rmultinomial(1, SIZE, composition(-MU))
+  }
+  
+  ## EXACT
+  if(DIM <= 3){
+    R_0 = exact_hermite(X, MU, SIGMA, B)
+  }else{
+    R_0 = exact_mcmc(X, MU, SIGMA, B)
+  }
+  
+  ## MC with importance sampling centered at Laplace approximation
   Norm = coda.count::lrnm_posterior_approx(X, MU, SIGMA, B)
   invSIGMA = solve(SIGMA)
   Z_pseudo = matrix(rnorm(DIM*N), nrow = DIM)
@@ -28,6 +40,7 @@ simulation = function(N, X, MU, SIGMA, B){
                                    MU, invSIGMA, 
                                    B, Z = Z_pseudo, rep(0, DIM))
   
+  ## MC with importance sampling centered at Laplace approximation and antithetic variates
   Z_av = matrix(rnorm(DIM*N/2), nrow = DIM)
   Z_av = cbind(Z_av,-Z_av)
   R_MC.AV = c_moments_lrnm_montecarlo(X,
@@ -35,85 +48,35 @@ simulation = function(N, X, MU, SIGMA, B){
                                       MU, invSIGMA, 
                                       B, Z = Z_av, rep(0, DIM))
   
-  # if(!QUASI_INIT){
-  #   Z_quasi = matrix(halton(n = N, normal = TRUE, init = TRUE), DIM)
-  #   QUASI_INIT <<- TRUE
-  # }else{
-  #   Z_quasi = matrix(halton(n = N, normal = TRUE, init = FALSE), DIM)
-  # }
-  
+  ## MC with importance sampling centered at Laplace approximation and quasi random generation
   Z_quasi = t(matrix(halton(n = N, normal = TRUE, dim = DIM), ncol=DIM))
   R_QMC = c_moments_lrnm_montecarlo(X,
                                     Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
                                     MU, invSIGMA, 
                                     B, Z = Z_quasi, rep(0, DIM))
-  
+  ## MCMC
   h = c_rlrnm_posterior(N, X, MU, SIGMA, B, r = 10)
   R_MCMC = cbind(crossprod(h,h)/N, colMeans(h))
   
-  res = list(R_MC,R_MC.AV,R_QMC,R_MCMC)
-  names(res) = c('MC', 'MC-AV', 'QMC', 'MCMC')
+  res = list(R_0, R_MC,R_MC.AV,R_QMC,R_MCMC)
+  names(res) = c('Exact', 'MC', 'MC-AV', 'QMC', 'MCMC')
   res
-}
-
-
-
-##############
-
-set.seed(SEED)
-if(DIM <= 3){
-  M0 = exact_hermite(X, MU, SIGMA, B, ORDER)
-}else{
-  M0 = exact_mcmc(X, MU, SIGMA, B)
-}
-R = replicate(10, simulation(N = 1000, X, MU, SIGMA, B), simplify = FALSE)
-
-
-extract = function(what) sapply(R, function(r, what_) sapply(r, what_, simplify = "array"), what, simplify = "array")
-M_1 = extract(function(r_) r_[,-(1:DIM)] - M0[,-(1:DIM)])
-M_2 = extract(function(r_) r_[,1:DIM] - M0[,1:DIM])
-
-if(DIM == 1){
-  M_1_mean = apply(M_1, 1, mean)
-  M_1_sd = apply(M_1, 1, sd)
   
-  M_2_mean = apply(M_2, 1, mean)
-  M_2_sd = apply(M_2, 1, sd)
-}else{
-  M_1_mean = apply(M_1, 1:2, mean)
-  M_1_sd = apply(M_1, 1:2, sd)
+}
+
+do_simulations = function(NSIM, DIM, SIZE, NORM, VAR, AGREEMENT){
+  sims = replicate(100, simulation(DIM, SIZE, NORM, VAR, AGREEMENT), simplify = FALSE)
   
-  M_2_mean = apply(M_2, 1:3, mean)
-  M_2_sd = apply(M_2, 1:3, sd)
+  results = lapply(sims, function(sim){
+    res = sapply(sim[c('MC', 'MC-AV', 'QMC', 'MCMC')], function(m){
+      err = abs(m-sim$Exact)
+      c(max(err[,  ncol(err)]), max(err[, 1:nrow(err)]))
+    })
+    d_ = as.data.frame(res, row.names = FALSE)
+    d_$moment = c('m1', 'm2')
+    d_
+  })
+  do.call(`rbind`, results)
 }
 
-RESULTS = list()
-if(DIM == 1){
-  RESULTS[['M1']] = list('mean' = abs(M_1_mean), 'sd' = M_1_sd)
-  RESULTS[['M2']] = list('mean' = abs(M_2_mean), 'sd' = M_2_sd)
-}else{
-  RESULTS[['M1']] = list('mean' = apply(abs(M_1_mean), 2, max), 
-                         'sd' = apply(abs(M_1_sd), 2, max))
-  RESULTS[['M2']] = list('mean' = apply(abs(M_2_mean), 3, max), 
-                         'sd' = apply(abs(M_2_sd), 3, max))
-}
-
-
-if(FALSE){
-  boxplot(moment_1)
-  abline(h = M0[,2])
-  
-  boxplot(moment_2)
-  abline(h = M0[,1])
-}
-
-
-
-# d0 = dlrnm(X, MU, SIGMA, hermite.order = 2000)
-# dd = function(h) dnorm(h, MU, sqrt(SIGMA)) * dbinom(X[1], sum(X), prob = composition(cbind(h))[,1]) / d0
-# dd_1 = function(h) h * dd(h)
-# dd_2 = function(h) h * h * dd(h)
-# 
-# integrate(dd, lower = -100, upper = 100)
-# integrate(dd_1, lower = -100, upper = 100)
-# integrate(dd_2, lower = -100, upper = 100)
+RESULTS = do_simulations(100, DIM, SIZE, NORM, VAR, AGREEMENT)
