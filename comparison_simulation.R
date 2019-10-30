@@ -42,7 +42,7 @@ simulation = function(N, X, MU, SIGMA, B){
   #   Z_quasi = matrix(halton(n = N, normal = TRUE, init = FALSE), DIM)
   # }
   
-  Z_quasi = matrix(halton(n = N, normal = TRUE), DIM)
+  Z_quasi = t(matrix(halton(n = N, normal = TRUE, dim = DIM), ncol=DIM))
   R_QMC = c_moments_lrnm_montecarlo(X,
                                     Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
                                     MU, invSIGMA, 
@@ -66,7 +66,7 @@ if(DIM <= 3){
 }else{
   M0 = exact_mcmc(X, MU, SIGMA, B)
 }
-R = replicate(1000, simulation(N = 1000, X, MU, SIGMA, B), simplify = FALSE)
+R = replicate(10, simulation(N = 1000, X, MU, SIGMA, B), simplify = FALSE)
 
 
 extract = function(what) sapply(R, function(r, what_) sapply(r, what_, simplify = "array"), what, simplify = "array")
