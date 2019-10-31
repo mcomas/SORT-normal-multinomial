@@ -14,5 +14,8 @@ RDATA = $(foreach generation,$(GENERATION),$(shell printf 'comparison/%s.RData' 
 
 all : $(RDATA)
 
-comparison/%.RData : comparison_parameters.R comparison_simulation.R
+comparison : 
+	mkdir comparison
+
+comparison/%.RData : comparison_parameters.R comparison_simulation.R comparison
 	Rscript -e 'PATTERN="$*"; source("comparison_parameters.R"); source("comparison_simulation.R"); save.image(file = "$@")'
