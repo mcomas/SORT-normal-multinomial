@@ -1,8 +1,9 @@
-DIM := 1 5 15 30 60
-SIZE := 1 10 100
-NORM := 0
+DIM := 1 10 50
+SIZE := 10 100
+NORM := 0 1 2
 VAR := 0.5 1 2
 AGREEMENT := FALSE TRUE
+
 #FIRST := 1
 #LAST := 1
 SEED := $(shell seq ${FIRST} ${LAST})

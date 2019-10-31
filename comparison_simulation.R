@@ -13,6 +13,18 @@ exact_mcmc = function(X, MU, SIGMA, B, SIM = 100000){
   R_approx
 }
 
+if(DIM <= 3){
+  exact_calculation = exact_hermite
+}else{
+  exact_calculation = exact_mcmc
+}
+
+if(DIM <= 6){
+  quasi_random = halton
+}else{
+  quasi_random = sobol
+}
+
 simulation = function(DIM, SIZE, NORM, VAR, AGREEMENT, B = ilr_basis(DIM+1), N = 1000){
   MU = rnorm(DIM)
   MU = MU/sqrt(sum(MU^2)) * NORM
@@ -25,13 +37,10 @@ simulation = function(DIM, SIZE, NORM, VAR, AGREEMENT, B = ilr_basis(DIM+1), N =
   }
   
   ## EXACT
-  if(DIM <= 3){
-    R_0 = exact_hermite(X, MU, SIGMA, B)
-  }else{
-    R_0 = exact_mcmc(X, MU, SIGMA, B)
-  }
+  R_0 = exact_calculation(X, MU, SIGMA, B)
   
   ## MC with importance sampling centered at Laplace approximation
+  T_MC = Sys.time()
   Norm = coda.count::lrnm_posterior_approx(X, MU, SIGMA, B)
   invSIGMA = solve(SIGMA)
   Z_pseudo = matrix(rnorm(DIM*N), nrow = DIM)
@@ -39,44 +48,63 @@ simulation = function(DIM, SIZE, NORM, VAR, AGREEMENT, B = ilr_basis(DIM+1), N =
                                    Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
                                    MU, invSIGMA, 
                                    B, Z = Z_pseudo, rep(0, DIM))
+  T_MC = as.numeric(Sys.time() - T_MC)
   
   ## MC with importance sampling centered at Laplace approximation and antithetic variates
+  T_MC.AV = Sys.time()
+  Norm = coda.count::lrnm_posterior_approx(X, MU, SIGMA, B)
+  invSIGMA = solve(SIGMA)
   Z_av = matrix(rnorm(DIM*N/2), nrow = DIM)
   Z_av = cbind(Z_av,-Z_av)
   R_MC.AV = c_moments_lrnm_montecarlo(X,
                                       Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
                                       MU, invSIGMA, 
                                       B, Z = Z_av, rep(0, DIM))
+  T_MC.AV = as.numeric(Sys.time() - T_MC.AV)
   
   ## MC with importance sampling centered at Laplace approximation and quasi random generation
-  Z_quasi = t(matrix(halton(n = N, normal = TRUE, dim = DIM), ncol=DIM))
+  T_QMC = Sys.time()
+  Norm = coda.count::lrnm_posterior_approx(X, MU, SIGMA, B)
+  invSIGMA = solve(SIGMA)
+  Z_quasi = t(matrix(quasi_random(n = N, normal = TRUE, dim = DIM), ncol=DIM))
   R_QMC = c_moments_lrnm_montecarlo(X,
                                     Norm[[1]]$mu, as.matrix(Norm[[1]]$sigma), 
                                     MU, invSIGMA, 
                                     B, Z = Z_quasi, rep(0, DIM))
+  T_QMC = as.numeric(Sys.time() - T_QMC)
+  
   ## MCMC
+  T_MCMC = Sys.time()
   h = c_rlrnm_posterior(N, X, MU, SIGMA, B, r = 10)
   R_MCMC = cbind(crossprod(h,h)/N, colMeans(h))
+  T_MCMC = as.numeric(Sys.time() - T_MCMC)
   
-  res = list(R_0, R_MC,R_MC.AV,R_QMC,R_MCMC)
-  names(res) = c('Exact', 'MC', 'MC-AV', 'QMC', 'MCMC')
+  res = list(R_0, R_MC,R_MC.AV,R_QMC,R_MCMC, c('MC' = T_MC, 'MC-AV' = T_MC.AV, 'QMC' = T_QMC, 'MCMC' = T_MCMC))
+  names(res) = c('Exact', 'MC', 'MC-AV', 'QMC', 'MCMC', 'Times')
   res
   
 }
 
 do_simulations = function(NSIM, DIM, SIZE, NORM, VAR, AGREEMENT){
-  sims = replicate(100, simulation(DIM, SIZE, NORM, VAR, AGREEMENT), simplify = FALSE)
+  sims = replicate(NSIM, simulation(DIM, SIZE, NORM, VAR, AGREEMENT), simplify = FALSE)
   
-  results = lapply(sims, function(sim){
-    res = sapply(sim[c('MC', 'MC-AV', 'QMC', 'MCMC')], function(m){
+  m1 = sapply(sims, function(sim){
+    sapply(sim[c('MC', 'MC-AV', 'QMC', 'MCMC')], function(m){
       err = abs(m-sim$Exact)
-      c(max(err[,  ncol(err)]), max(err[, 1:nrow(err)]))
+      max(err[, ncol(err)])
     })
-    d_ = as.data.frame(res, row.names = FALSE)
-    d_$moment = c('m1', 'm2')
-    d_
   })
-  do.call(`rbind`, results)
+  m2 = sapply(sims, function(sim){
+    sapply(sim[c('MC', 'MC-AV', 'QMC', 'MCMC')], function(m){
+      err = abs(m-sim$Exact)
+      max(err[, 1:nrow(err)])
+    })
+  })
+  times = sapply(sims, function(sim) sim$Times)
+  
+  list('m1' = as.data.frame(t(m1)), 
+       'm2' = as.data.frame(t(m2)), 
+       'times' = as.data.frame(t(times)))
 }
 
-RESULTS = do_simulations(100, DIM, SIZE, NORM, VAR, AGREEMENT)
+RESULTS = do_simulations(50, DIM, SIZE, NORM, VAR, AGREEMENT)
