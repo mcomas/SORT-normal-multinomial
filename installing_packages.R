@@ -1,4 +1,5 @@
 install.packages('coda.base')
+install.packages('remotes')
 remotes::install_github('mcomas/coda.count')
 install.packages('randtoolbox')
 install.packages('digest')
