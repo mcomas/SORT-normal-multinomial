@@ -8,7 +8,10 @@ data = rbindlist(lapply(fls, function(fl){
   load(file.path('comparison', fl))
   
   PATTERN = gsub('.RData', '', fl)
-  d = data.table(as.data.frame(RESULTS), keep.rownames = TRUE)
+  d = rbindlist(list(
+    as.data.table(RESULTS$m1.mc)[,exact := 'mc'],
+    as.data.table(RESULTS$m1.mcmc)[,exact := 'mcmc']))
+  d = melt(d, measure.vars = c('MC','MC-AV','QMC','MCMC'))
   d[,DIM := as.integer(sub(pattern_build, "\\1", PATTERN))]
   d[,SIZE := as.integer(sub(pattern_build, "\\2", PATTERN))]
   d[,NORM := as.numeric(sub(pattern_build, "\\3", PATTERN))]
@@ -18,14 +21,30 @@ data = rbindlist(lapply(fls, function(fl){
   d
 }))
 
+summary(glm(value~variable+DIM+SIZE+NORM+VAR, data=data, subset = exact == 'mc'))
+summary(glm(value~variable+DIM+SIZE+NORM+VAR, data=data, subset = exact == 'mcmc'))
+
+
 library(ggplot2)
-dplot = data[,.(m=median(M1.mean), q1=quantile(M1.mean, 0.25), q3=quantile(M1.mean, 0.75)),
-             .(rn, DIM, SIZE, NORM, VAR, AGREEMENT)]
+dplot = data[,.(m=median(value), q1=quantile(value, 0.25), q3=quantile(value, 0.75)),
+             .(variable, exact, DIM, SIZE, NORM, VAR, AGREEMENT)]
 
 ggplot(data=dplot) +
   geom_hline(yintercept = 0, col = 'red') +
-  geom_boxplot(aes(x=rn,y=m)) +
-  facet_wrap(~DIM+VAR, scales = 'free_y') +
+  geom_boxplot(aes(x=variable,y=m,fill=exact)) +
+  facet_grid(DIM~VAR, scales = 'free_y') +
+  theme_minimal()
+
+ggplot(data=dplot) +
+  geom_hline(yintercept = 0, col = 'red') +
+  geom_boxplot(aes(x=variable,y=m,fill=exact)) +
+  facet_grid(DIM~SIZE, scales = 'free_y') +
+  theme_minimal()
+
+ggplot(data=dplot) +
+  geom_hline(yintercept = 0, col = 'red') +
+  geom_boxplot(aes(x=variable,y=m,fill=factor(VAR))) +
+  facet_grid(SIZE~NORM, scales = 'free_y') +
   theme_minimal()
 
 ggplot(data=dplot) +
