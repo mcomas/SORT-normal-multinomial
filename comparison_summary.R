@@ -1,16 +1,17 @@
 library(data.table)
-
-fls = list.files('comparison')
+PATH = 'comparison_new'
+fls = list.files(PATH)
 
 pattern_build = "DIM_(.+)-SIZE_(.+)-NORM_(.+)-VAR_(.+)-AGREEMENT_(.+)-SEED_([0-9]+)"
 data = rbindlist(lapply(fls, function(fl){
   # print(fl)
-  load(file.path('comparison', fl))
+  load(file.path(PATH, fl))
   
   PATTERN = gsub('.RData', '', fl)
-  d = rbindlist(list(
-    as.data.table(RESULTS$m1.mc)[,exact := 'mc'],
-    as.data.table(RESULTS$m1.mcmc)[,exact := 'mcmc']))
+  d = as.data.table(RESULTS$m1.mc)[,exact := 'mc']
+  # d = rbindlist(list(
+  #   as.data.table(RESULTS$m1.mc)[,exact := 'mc'],
+  #   as.data.table(RESULTS$m1.mcmc)[,exact := 'mcmc']))
   d = melt(d, measure.vars = c('MC','MC-AV','QMC','MCMC'))
   d[,DIM := as.integer(sub(pattern_build, "\\1", PATTERN))]
   d[,SIZE := as.integer(sub(pattern_build, "\\2", PATTERN))]
@@ -20,6 +21,23 @@ data = rbindlist(lapply(fls, function(fl){
   d[,SEED := as.integer(sub(pattern_build, "\\6", PATTERN))]
   d
 }))
+
+summary(glm(value~variable+DIM+SIZE+NORM+VAR, data=data))
+
+ggplot(data=data) +
+  geom_hline(yintercept = 0, col = 'red') +
+  geom_boxplot(aes(x=factor(SIZE),y=value,fill=variable)) +
+  facet_grid(NORM+VAR~DIM, scales = 'free_y') +
+  theme_minimal()
+
+dplot1 = data[,.(m=median(value, na.rm=TRUE), q1=quantile(value, 0.025, na.rm=TRUE), q3=quantile(value, 0.975, na.rm=TRUE)),
+             .(variable, exact, DIM, SIZE, NORM, VAR, AGREEMENT)]
+
+ggplot(data=dplot1) +
+  geom_hline(yintercept = 0, col = 'red') +
+  geom_errorbar(aes(x=variable,y=m,col=factor(SIZE), ymin=q1,ymax=q3), position = position_dodge()) +
+  facet_grid(DIM+NORM~VAR, scales = 'free_y') +
+  theme_minimal()
 
 summary(glm(value~variable+DIM+SIZE+NORM+VAR, data=data, subset = exact == 'mc'))
 summary(glm(value~variable+DIM+SIZE+NORM+VAR, data=data, subset = exact == 'mcmc'))
@@ -31,7 +49,7 @@ dplot = data[,.(m=median(value, na.rm=TRUE), q1=quantile(value, 0.25, na.rm=TRUE
 
 ggplot(data=dplot) +
   geom_hline(yintercept = 0, col = 'red') +
-  geom_boxplot(aes(x=variable,y=m,fill=exact)) +
+  geom_boxplot(aes(x=variable,y=m,fill=factor(NORM))) +
   facet_grid(DIM~VAR, scales = 'free_y') +
   theme_minimal()
 

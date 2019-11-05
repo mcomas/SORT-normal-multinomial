@@ -46,7 +46,7 @@ simulation = function(DIM, SIZE, NORM, VAR, AGREEMENT, B = ilr_basis(DIM+1), N =
     R_0[['exact_hermite']] = exact_hermite(X, MU, SIGMA, B)
   }
   R_0[['exact_mc']] = exact_mc(X, MU, SIGMA, B)
-  R_0[['exact_mcmc']] = exact_mcmc(X, MU, SIGMA, B)
+  # R_0[['exact_mcmc']] = exact_mcmc(X, MU, SIGMA, B)
   
   ## MC with importance sampling centered at Laplace approximation
   T_MC = Sys.time()
@@ -109,18 +109,18 @@ do_simulations = function(NSIM, DIM, SIZE, NORM, VAR, AGREEMENT){
       max(err[, 1:nrow(err)])
     })
   })
-  m1.mcmc = sapply(sims, function(sim){
-    sapply(sim[c('MC', 'MC-AV', 'QMC', 'MCMC')], function(m){
-      err = abs(m-sim$exact_mcmc)
-      max(err[, ncol(err)])
-    })
-  })
-  m2.mcmc = sapply(sims, function(sim){
-    sapply(sim[c('MC', 'MC-AV', 'QMC', 'MCMC')], function(m){
-      err = abs(m-sim$exact_mcmc)
-      max(err[, 1:nrow(err)])
-    })
-  })
+  # m1.mcmc = sapply(sims, function(sim){
+  #   sapply(sim[c('MC', 'MC-AV', 'QMC', 'MCMC')], function(m){
+  #     err = abs(m-sim$exact_mcmc)
+  #     max(err[, ncol(err)])
+  #   })
+  # })
+  # m2.mcmc = sapply(sims, function(sim){
+  #   sapply(sim[c('MC', 'MC-AV', 'QMC', 'MCMC')], function(m){
+  #     err = abs(m-sim$exact_mcmc)
+  #     max(err[, 1:nrow(err)])
+  #   })
+  # })
   times = sapply(sims, function(sim) sim$Times)
   
   if('exact_hermite' %in% names(sims[[1]])){
@@ -140,14 +140,14 @@ do_simulations = function(NSIM, DIM, SIZE, NORM, VAR, AGREEMENT){
          'm2.hermite' = as.data.frame(t(m2.mc)), 
          'm1.mc' = as.data.frame(t(m1.mc)), 
          'm2.mc' = as.data.frame(t(m2.mc)), 
-         'm1.mcmc' = as.data.frame(t(m1.mcmc)), 
-         'm2.mcmc' = as.data.frame(t(m2.mcmc)), 
+         # 'm1.mcmc' = as.data.frame(t(m1.mcmc)), 
+         # 'm2.mcmc' = as.data.frame(t(m2.mcmc)), 
          'times' = as.data.frame(t(times)))
   }else{
     list('m1.mc' = as.data.frame(t(m1.mc)), 
          'm2.mc' = as.data.frame(t(m2.mc)), 
-         'm1.mcmc' = as.data.frame(t(m1.mcmc)), 
-         'm2.mcmc' = as.data.frame(t(m2.mcmc)), 
+         # 'm1.mcmc' = as.data.frame(t(m1.mcmc)), 
+         # 'm2.mcmc' = as.data.frame(t(m2.mcmc)), 
          'times' = as.data.frame(t(times)))
   }
 

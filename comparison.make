@@ -1,8 +1,8 @@
-DIM := 1 10 20 30 40 50
+DIM := 1 5 25 125
 SIZE := 10 100
 NORM := 0 1 2
 VAR := 0.5 1 2
-AGREEMENT := TRUE FALSE
+AGREEMENT := TRUE
 
 #OUTPUT := comparison
 #FIRST := 1
