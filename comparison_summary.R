@@ -26,7 +26,7 @@ summary(glm(value~variable+DIM+SIZE+NORM+VAR, data=data, subset = exact == 'mcmc
 
 
 library(ggplot2)
-dplot = data[,.(m=median(value), q1=quantile(value, 0.25), q3=quantile(value, 0.75)),
+dplot = data[,.(m=median(value, na.rm=TRUE), q1=quantile(value, 0.25, na.rm=TRUE), q3=quantile(value, 0.75, na.rm=TRUE)),
              .(variable, exact, DIM, SIZE, NORM, VAR, AGREEMENT)]
 
 ggplot(data=dplot) +
