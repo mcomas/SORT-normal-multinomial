@@ -1,32 +1,40 @@
 library(data.table)
-PATH = 'comparison'
-fls = list.files(PATH)
+PATH = 'ex01'
+fls = list.files(PATH, pattern = "*.RData")
 
-pattern_build = "DIM_(.+)-SIZE_(.+)-NORM_(.+)-VAR_(.+)-AGREEMENT_(.+)-SEED_([0-9]+)"
+pattern_build = "N_([0-9]+)-n_([0-9]+)-s_([0-9]+)-seed_([0-9]+)"
 data = rbindlist(lapply(fls, function(fl){
   # print(fl)
   load(file.path(PATH, fl))
   
   PATTERN = gsub('.RData', '', fl)
-  d = as.data.table(RESULTS$m1.mc)[,exact := 'mc']
-  # d = rbindlist(list(
-  #   as.data.table(RESULTS$m1.mc)[,exact := 'mc'],
-  #   as.data.table(RESULTS$m1.mcmc)[,exact := 'mcmc']))
-  d = melt(d, measure.vars = c('MC','MC-AV','QMC','MCMC'))
-  d[,DIM := as.integer(sub(pattern_build, "\\1", PATTERN))]
-  d[,SIZE := as.integer(sub(pattern_build, "\\2", PATTERN))]
-  d[,NORM := as.numeric(sub(pattern_build, "\\3", PATTERN))]
-  d[,VAR := as.matrix(as.numeric(sub(pattern_build, "\\4", PATTERN)))]
-  d[,AGREEMENT := as.logical(sub(pattern_build, "\\5", PATTERN))]
-  d[,SEED := as.integer(sub(pattern_build, "\\6", PATTERN))]
+  ld = lapply(list(
+    'dm' = 'dm',
+    'lrnm-dm' = 'lrnm-dm',
+    'lrnm-laplace' = 'lrnm-laplace'
+  ), function(v)
+    sapply(RESULTS, function(res, v)
+      res[[v]], v))
+  
+  d = as.data.table(ld)
+  d = melt(d, measure.vars = names(ld))
+  d[,N := as.integer(sub(pattern_build, "\\1", PATTERN))]
+  d[,n := as.integer(sub(pattern_build, "\\2", PATTERN))]
+  d[,s := as.numeric(sub(pattern_build, "\\3", PATTERN))]
+  d[,seed := as.numeric(sub(pattern_build, "\\4", PATTERN))]
   d
 }))
 
-summary(glm(value~variable+DIM+SIZE+NORM+VAR, data=data))
+dplot = data[, .(m = mean(value)), .(variable, N, n, s)]
+
+library(ggplot2)
+ggplot(data=data) +
+  geom_boxplot(aes(x=factor(n),y=value, col=variable), position=position_dodge()) +
+  coord_cartesian(ylim = c(0, 0.06))
 
 ggplot(data=data) +
   geom_hline(yintercept = 0, col = 'red') +
-  geom_boxplot(aes(x=factor(SIZE),y=value,fill=variable)) +
+  geom_boxplot(aes(x=factor(SIZE),y=value, fill=variable)) +
   facet_grid(NORM+VAR~DIM, scales = 'free_y') +
   theme_minimal()
 

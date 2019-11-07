@@ -1,25 +1,3 @@
-aitchison_approximation = function(XZ){
-  G = colMeans(XZ)
-  G = G / sum(G)
-  
-  
-  K = cov(XZ/rowSums(XZ))
-  
-  TAU = matrix(0, nrow=nrow(K), ncol=ncol(K))
-  tau = function(i,j){
-    K[i,i]/G[i]^2 - 2 * K[i,j]/(G[i]*G[j]) + K[j,j]/G[j]^2 + 1/4 * (K[i,i]/G[i]^2 - K[j,j]/G[j]^2)^2
-  }
-  for(i in 1:nrow(K)){for(j in 1:ncol(K)){ TAU[i,j] = tau(i,j) }}
-  Fn = cbind(diag(1,nrow(K)-1), -1)
-  S = -0.5 * Fn %*% TAU %*% t(Fn)
-
-  alrTOilr = MASS::ginv(alr_basis(ncol(XZ))) %*% ilr_basis(ncol(XZ))
-  
-  MU = coordinates(G)
-  SIGMA = alrTOilr %*% S %*% t(alrTOilr)
-  t(sapply(coda.count::lrnm_posterior_approx(XZ, MU, SIGMA, B = ilr_basis(ncol(XZ))), function(l) l$mu))
-}
-
 simulation = function(N, n, S){
   p = params[[S]]$p
   h = coordinates(p)
@@ -49,32 +27,32 @@ simulation = function(N, n, S){
   H.lrnm_dm = coordinates(fit.lrnm_dm$P)
   e.lrnm_dm = sqrt(sum( rowMeans(t(H.lrnm_dm) - h)^2 ))
 
-  ## LRNM initialisation with Aitchison approach
-  t.lrnm_aitchison = proc.time()
+  ## LRNM initialisation with laplacian approximation
+  t.lrnm_laplace = proc.time()
+  t.lrnm_laplace_init = proc.time()
+  fit.lrnm_laplace_init = fit_lrnm(XZ, probs = TRUE, method = 'laplace')
+  t.lrnm_laplace_init = proc.time() - t.lrnm_laplace_init
+  
   quasi_random = sobol
   Z_quasi = matrix(quasi_random(n = 1000, normal = TRUE, dim = length(p)-1), ncol=length(p)-1)
-  fit.lrnm_aitchison = fit_lrnm(XZ, probs = TRUE, Z = Z_quasi, H.ini = aitchison_approximation(XZ))
-  t.lrnm_aitchison = proc.time() - t.lrnm_aitchison
-  
-  H.lrnm_aitchison = coordinates(fit.lrnm_aitchison$P)
-  e.lrnm_aitchison = sqrt(sum( rowMeans(t(H.lrnm_aitchison) - h)^2 ))
-  
-  ## LRNM with laplacian approximation
-  t.lrnm_laplace = proc.time()
-  fit.lrnm_laplace = fit_lrnm(XZ, probs = TRUE, method = 'laplace')
+  fit.lrnm_laplace = fit_lrnm(XZ, probs = TRUE, Z = Z_quasi, H.ini = coordinates(fit.lrnm_laplace_init$P))
   t.lrnm_laplace = proc.time() - t.lrnm_laplace
   
   H.lrnm_laplace = coordinates(fit.lrnm_laplace$P)
   e.lrnm_laplace = sqrt(sum( rowMeans(t(H.lrnm_laplace) - h)^2 ))
+  
+  ## LRNM with laplacian approximation
+  H.lrnm_laplace_init = coordinates(fit.lrnm_laplace_init$P)
+  e.lrnm_laplace_init = sqrt(sum( rowMeans(t(H.lrnm_laplace_init) - h)^2 ))
 
   list('dm' = e.dm,
        'lrnm-dm' = e.lrnm_dm,
-       'lrnm-aitchison' = e.lrnm_aitchison,
        'lrnm-laplace' = e.lrnm_laplace,
+       'lrnm-laplace-initialisation' = e.lrnm_laplace_init,
        'times' = list('dm' = t.dm,
                       'lrnm-dm' = t.lrnm_dm,
-                      'lrnm-aitchison' = t.lrnm_aitchison,
-                      'lrnm-laplace' = t.lrnm_laplace))
+                      'lrnm-laplace' = t.lrnm_laplace,
+                      'lrnm-laplace-init' = t.lrnm_laplace_init))
 }
 
 do_simulations = function(NSIM, N, n, S){
