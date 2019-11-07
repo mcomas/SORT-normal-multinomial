@@ -15,14 +15,15 @@ simulation = function(N, n, S){
   
   ## Dirichlet-multinomial fitting
   t.dm = proc.time()
-  fit.dm <- fit_dm(XZ)
+  fit.dm = dirmult(XZ, trace = FALSE)
   t.dm = proc.time() - t.dm
   
-  ## LRNM initialisation with Dirichlet
+  ## LRNM initialisation with Dirichlet-multinomial
   t.lrnm_dm = proc.time()
   quasi_random = sobol
+  fit.dm_init = dirmult(XZ, trace = FALSE)
   Z_quasi = matrix(quasi_random(n = 1000, normal = TRUE, dim = length(p)-1), ncol=length(p)-1)
-  fit.lrnm_dm = fit_lrnm(XZ, probs = TRUE, Z = Z_quasi)
+  fit.lrnm_dm = fit_lrnm(XZ, probs = TRUE, Z = Z_quasi, H.ini = coordinates(t(t(XZ) + fit.dm_init$gamma)))
   t.lrnm_dm = proc.time() - t.lrnm_dm
 
   ## LRNM initialisation with laplacian approximation
@@ -38,7 +39,7 @@ simulation = function(N, n, S){
   t.lrnm_laplace = proc.time() - t.lrnm_laplace
   
   ### Evaluation
-  H.dm = coordinates(t(t(XZ) + fit.dm[,1]))
+  H.dm = coordinates(t(t(XZ) + fit.dm$gamma))
   e.dm = evaluate(h, H.dm)
   
   H.lrnm_dm = coordinates(fit.lrnm_dm$P)

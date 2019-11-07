@@ -1,5 +1,6 @@
 library(coda.base)
 library(coda.count)
+library(dirmult)
 library(randtoolbox)
 library(digest)
 
