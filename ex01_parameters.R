@@ -17,5 +17,3 @@ HASH = sha1(build)
 SEED_0 = strtoi(substr(HASH,  10, 15), 16L) + strtoi(substr(HASH,  15, 20), 16L)
 set.seed(SEED_0 + SEED)
 
-source('ex01_simulations.R')
-
