@@ -2,9 +2,6 @@
 title: "Modelling count data using the logratio-normal-multinomial distribution"
 author: Marc Comas-Cufí, Josep-Antoni Martín- Fernández, Glòria Mateu-Figueras, Javier
   Palarea-Albaladejo
-output:
-  html_document:
-    keep_md: no
 ---
 
 This repository contains the scripts for the article Modelling count data using the logratio- normal-multinomial distribution published in SORT: Statistics and Operational Research Transactions
