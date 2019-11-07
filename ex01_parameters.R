@@ -5,15 +5,15 @@ library(digest)
 
 source('ex01_scenarios.R')
 
-if(!exists('build')) build = 'N_01000-n_00050-s_00001-seed_00001'
+if(!exists('PATTERN')) PATTERN = 'N_01000-n_00050-s_00001-seed_00001'
 pattern_build = "N_([0-9]+)-n_([0-9]+)-s_([0-9]+)-seed_([0-9]+)*"
 
-N = as.numeric(sub(pattern_build, "\\1", build))
-n = as.numeric(sub(pattern_build, "\\2", build))
-S = as.numeric(sub(pattern_build, "\\3", build))
-SEED = as.numeric(sub(pattern_build, "\\4", build))
+N = as.numeric(sub(pattern_build, "\\1", PATTERN))
+n = as.numeric(sub(pattern_build, "\\2", PATTERN))
+S = as.numeric(sub(pattern_build, "\\3", PATTERN))
+SEED = as.numeric(sub(pattern_build, "\\4", PATTERN))
 
-HASH = sha1(build)
+HASH = sha1(PATTERN)
 SEED_0 = strtoi(substr(HASH,  10, 15), 16L) + strtoi(substr(HASH,  15, 20), 16L)
 set.seed(SEED_0 + SEED)
 
