@@ -9,7 +9,7 @@ L_n = 50 100 200 500
 L_s =  1 2 3 4 5 6 7 8 9
 L_seed = $(shell seq ${FIRST} ${LAST})
 
-GENERATION = $(foreach seed,$(L_seed),$(foreach s,$(L_s),$(foreach n,$(L_n),$(foreach N,$(L_N),$(shell printf 'N_%05d-n_%05d-s_%05d-seed_%05d.RData' $(N) $(n) $(s) $(seed))))))
+GENERATION = $(foreach seed,$(L_seed),$(foreach s,$(L_s),$(foreach n,$(L_n),$(foreach N,$(L_N),$(shell printf 'N_%05d-n_%05d-s_%05d-seed_%05d' $(N) $(n) $(s) $(seed))))))
 
 RDATA = $(foreach generation,$(GENERATION),$(shell printf '$(OUTPUT)/%s.RData' $(generation)))
 
