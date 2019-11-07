@@ -15,5 +15,5 @@ RDATA = $(foreach generation,$(GENERATION),$(shell printf '$(OUTPUT)/%s.RData' $
 
 all : $(RDATA)
 
-$(OUTPUT)/%.RData : ex01_parameters.R ex01_simulations.R ex01_scenarios.R
+$(OUTPUT)/%.RData : ex01_parameters.R ex01_simulation.R ex01_scenarios.R
 	Rscript -e 'PATTERN="$*"; source("ex01_parameters.R"); source("ex01_simulation.R"); save.image(file = "$@")' > $(OUTPUT)/$*.log
