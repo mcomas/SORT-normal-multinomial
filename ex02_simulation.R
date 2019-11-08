@@ -1,10 +1,11 @@
-evaluate = function(h_pi, H_p){
-  mean(sqrt(colSums( (t(H_p) - h_pi)^2 )))
+evaluate = function(H_pi, H_p){
+  mean(sqrt(rowSums(H_p - H_pi)^2 ))
 }
 
 simulation = function(N, n, S){
   generator = params[[S]]
   p = generator(N)
+  H = coordinates(t(sapply(p, function(p_) c('AA' = p_^2, 'AB' = 2*p_*(1-p_),  'BB' = (1-p_)^2))))
   
   XZ = HWData(N, n, p = p)
   isZERO = XZ == 0
@@ -38,16 +39,16 @@ simulation = function(N, n, S){
   
   ### Evaluation
   H.dm = coordinates(t(t(XZ) + fit.dm$gamma))
-  e.dm = evaluate(h, H.dm)
+  e.dm = evaluate(H, H.dm)
   
   H.lrnm_dm = coordinates(fit.lrnm_dm$P)
-  e.lrnm_dm = evaluate(h, H.lrnm_dm)
+  e.lrnm_dm = evaluate(H, H.lrnm_dm)
   
   H.lrnm_laplace = coordinates(fit.lrnm_laplace$P)
-  e.lrnm_laplace = evaluate(h, H.lrnm_laplace)
+  e.lrnm_laplace = evaluate(H, H.lrnm_laplace)
   
   H.lrnm_laplace_init = coordinates(fit.lrnm_laplace_init$P)
-  e.lrnm_laplace_init = evaluate(h, H.lrnm_laplace_init)
+  e.lrnm_laplace_init = evaluate(H, H.lrnm_laplace_init)
 
   list('dm' = e.dm,
        'lrnm-dm' = e.lrnm_dm,

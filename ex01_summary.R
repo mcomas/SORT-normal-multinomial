@@ -38,3 +38,4 @@ ggplot(data=dplot) +
   facet_wrap(~s, scale = 'free_y', ncol = 3) +
   theme_minimal()
 
+
