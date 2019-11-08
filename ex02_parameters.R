@@ -7,7 +7,8 @@ library(HardyWeinberg)
 
 source('ex02_scenarios.R')
 
-if(!exists('PATTERN')) PATTERN = 'N_01000-n_00050-s_00001-seed_00001'
+if(!exists('PATTERN')) PATTERN = 'N_00100-n_00050-s_00001-seed_00001'
+# PATTERN="N_00100-n_00050-s_00006-seed_00001"
 pattern_build = "N_([0-9]+)-n_([0-9]+)-s_([0-9]+)-seed_([0-9]+)*"
 
 N = as.numeric(sub(pattern_build, "\\1", PATTERN))
