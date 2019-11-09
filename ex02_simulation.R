@@ -21,7 +21,7 @@ simulation = function(N, n, S){
   t.lrnm_dm = proc.time()
   quasi_random = sobol
   fit.dm_init = dirmult(XZ, trace = FALSE)
-  Z_quasi = matrix(quasi_random(n = 1000, normal = TRUE, dim = length(p)-1), ncol=2)
+  Z_quasi = matrix(quasi_random(n = 1000, normal = TRUE, dim = ncol(H)), ncol=2)
   fit.lrnm_dm = fit_lrnm(XZ, probs = TRUE, Z = Z_quasi, H.ini = coordinates(t(t(XZ) + fit.dm_init$gamma)))
   t.lrnm_dm = proc.time() - t.lrnm_dm
 
@@ -33,7 +33,7 @@ simulation = function(N, n, S){
     t.lrnm_laplace_init = proc.time() - t.lrnm_laplace_init
   ###
   quasi_random = sobol
-  Z_quasi = matrix(quasi_random(n = 1000, normal = TRUE, dim = length(p)-1), ncol=2)
+  Z_quasi = matrix(quasi_random(n = 1000, normal = TRUE, dim = ncol(H)), ncol=2)
   fit.lrnm_laplace = fit_lrnm(XZ, probs = TRUE, Z = Z_quasi, H.ini = coordinates(fit.lrnm_laplace_init$P))
   t.lrnm_laplace = proc.time() - t.lrnm_laplace
   
