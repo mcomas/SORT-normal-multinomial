@@ -41,7 +41,7 @@ simulation = function(N, n, S){
     MU = t(apply(XZ, 1, l_lrnm_join_maximum, mu_, solve(cov_), Binv))
     mu_new = colMeans(MU)
     cov_ = cov(MU)
-    if(max(abs(mu_new - mu_)) < 0.0001){
+    if(max(abs(mu_new - mu_)) < 0.001){
       mu_ = mu_new
       break
     }
