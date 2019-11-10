@@ -29,7 +29,7 @@ simulation = function(N, n, S){
   ## Initialisation
     t.lrnm_laplace = proc.time()
     t.lrnm_laplace_init = proc.time()
-    fit.lrnm_laplace_init = fit_lrnm(XZ, probs = TRUE, method = 'laplace', eps = 0.1)
+    fit.lrnm_laplace_init = fit_lrnm(XZ, probs = TRUE, method = 'laplace')
     t.lrnm_laplace_init = proc.time() - t.lrnm_laplace_init
   ###
   quasi_random = sobol
