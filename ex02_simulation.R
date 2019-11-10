@@ -38,6 +38,7 @@ simulation = function(N, n, S){
   Binv = ilr_basis(3)
   while(iter < 100){
     iter  = iter + 1
+    if(det(cov_) < 1e-6) break
     MU = t(apply(XZ, 1, l_lrnm_join_maximum, mu_, solve(cov_), Binv))
     mu_new = colMeans(MU)
     if(max(abs(mu_new - mu_)) < 0.001){
