@@ -32,10 +32,26 @@ simulation = function(N, n, S){
     t.lrnm_laplace_init = proc.time()
     fit.lrnm_laplace_init = fit_lrnm(XZ, probs = TRUE, method = 'laplace')
     t.lrnm_laplace_init = proc.time() - t.lrnm_laplace_init
+    
+    mu_ = coordinates(colSums(XZ))
+    cov_ = diag(length(p)-1)
+    iter = 0
+    Binv = ilr_basis(length(p))
+    while(iter < 100){
+      iter  = iter + 1
+      MU = t(apply(XZ, 1, l_lrnm_join_maximum, mu_, solve(cov_), Binv))
+      mu_new = colMeans(MU)
+      cov_ = cov(MU)
+      if(max(abs(mu_new - mu_)) < 1e-10){
+        mu_ = mu_new
+        break
+      }
+      mu_ = mu_new
+    }
   ###
   quasi_random = sobol
   Z_quasi = matrix(quasi_random(n = 1000, normal = TRUE, dim = length(p)-1), ncol=length(p)-1)
-  fit.lrnm_laplace = fit_lrnm(XZ, probs = TRUE, Z = Z_quasi, H.ini = coordinates(fit.lrnm_laplace_init$P))
+  fit.lrnm_laplace = fit_lrnm(XZ, probs = TRUE, Z = Z_quasi, H.ini = MU)
   t.lrnm_laplace = proc.time() - t.lrnm_laplace
   
   ### Evaluation
