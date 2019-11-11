@@ -25,7 +25,7 @@ data = rbindlist(lapply(fls, function(fl){
   d
 }))
 
-dplot = data[N==1000, .(m = mean(value)), .(variable, N, n, s)]
+dplot = data[, .(m = mean(value)), .(variable, N, n, s)]
 
 library(ggplot2)
 # ggplot(data=data) +
