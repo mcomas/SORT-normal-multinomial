@@ -15,8 +15,8 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
   while(iter < 1000){
     iter  = iter + 1
     eig = eigen(cov_)
-    print(eig$values)
-    MU = t(apply(X, 1, l_lrnm_join_maximum, mu_, diag(1/exp(mean(log(eig$values))), d), Binv))
+    s = pmax(eig$values, exp(mean(log(eig$values))))
+    MU = t(apply(X, 1, l_lrnm_join_maximum, mu_, diag(1/s, d), Binv))
     mu_new = colMeans(MU)
     if(max(abs(mu_new - mu_)) < 0.001){ # avoid degenerate cases
       mu_ = mu_new
