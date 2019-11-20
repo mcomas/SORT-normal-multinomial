@@ -15,9 +15,11 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
   while(iter < 1000){
     iter  = iter + 1
     eig = eigen(cov_)
-    S = t(eig$vectors) %*% diag(pmax(eig$values, mean(eig$values)))  %*% eig$vectors
+    S = t(eig$vectors) %*% diag(pmax(eig$values, sum(rev(ppoints(d)), eig$values)))  %*% eig$vectors
     MU = t(apply(X, 1, l_lrnm_join_maximum, mu_, solve(S), Binv))
     mu_new = colMeans(MU)
+    # cat('orig:', eig$values, '\n')
+    # cat('used:', pmax(eig$values, mean(eig$values)), '\n')
     if(max(abs(mu_new - mu_)) < 0.001){ # avoid degenerate cases
       mu_ = mu_new
       break
