@@ -12,7 +12,7 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
   cov_ = diag(d)
   
   iter = 0
-  w = 0.5
+  w = 0.75
   while(iter < 100){
     iter  = iter + 1
     eig = eigen(cov_)
