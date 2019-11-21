@@ -15,8 +15,9 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
   w = 0.75
   while(iter < 100){
     iter  = iter + 1
-    eig = eigen(cov_)
-    S = t(eig$vectors) %*% diag( pmax(eig$values, mean(eig$values)) )  %*% eig$vectors
+    # eig = eigen(cov_)
+    # S = t(eig$vectors) %*% diag( pmax(eig$values, mean(eig$values)) )  %*% eig$vectors
+    S = cov_
     A = lapply(1:nrow(X), function(i) c_posterior_approximation_vec(X[i,], mu_, solve(S), Binv))
     MU = t(sapply(A, function(pars) mvtnorm::rmvnorm(1, pars[,d+1], w^iter*pars[,1:d])))
     mu_new = colMeans(MU)
