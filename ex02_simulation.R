@@ -10,14 +10,17 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
   Binv = t(MASS::ginv(B))
   d = ncol(X)-1
   cov_ = diag(d)
-  iter = 0
   
-  while(iter < 1000){
+  iter = 0
+  w = 0.5
+  while(iter < 100){
     iter  = iter + 1
     eig = eigen(cov_)
-    S = t(eig$vectors) %*% diag(pmax(eig$values, mean(eig$values)))  %*% eig$vectors
-    MU = t(apply(X, 1, l_lrnm_join_maximum, mu_, solve(S), Binv))
+    S = t(eig$vectors) %*% diag( pmax(eig$values, mean(eig$values)) )  %*% eig$vectors
+    A = lapply(1:nrow(X), function(i) c_posterior_approximation_vec(X[i,], mu_, solve(S), Binv))
+    MU = t(sapply(A, function(pars) mvtnorm::rmvnorm(1, pars[,d+1], w^iter*pars[,1:d])))
     mu_new = colMeans(MU)
+    print(mu_new)
     if(max(abs(mu_new - mu_)) < 0.001){ # avoid degenerate cases
       mu_ = mu_new
       break
@@ -25,7 +28,7 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
     mu_ = mu_new
     cov_ = cov(MU)
   }
-  MU
+  t(apply(X, 1, l_lrnm_join_maximum, mu_, solve(S), Binv))
 }
 simulation = function(N, n, S){
   generator = params[[S]]
