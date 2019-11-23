@@ -31,11 +31,11 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
       break
     }
     mu_ = mu_new
-    cov_ = cov(MU_rnd)
+    cov_ = cov(H1_rnd)
   }
   cat('Initial cov:\n')
-  print(cov(MU))
-  MU
+  print(cov(H1))
+  H1
 }
 simulation = function(N, n, S){
   generator = params[[S]]
