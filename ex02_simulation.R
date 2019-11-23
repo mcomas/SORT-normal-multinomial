@@ -6,21 +6,26 @@ lrnm_dm.init = function(X){
   coordinates(t(t(X) + fit.dm_init$gamma))
 }
 lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
+  cat('Laplace init\n')
   mu_ = coordinates(colSums(X), B)
   Binv = t(MASS::ginv(B))
   d = ncol(X)-1
   cov_ = diag(d)
-  
   iter = 0
-  w = 0.75
-  while(iter < 100){
+  
+  while(iter < 1000){
     iter  = iter + 1
     S = cov_
-    # print(eigen(S))
+    cat('Eigen S:\n')
+    print(eigen(S)$values)
     A = lapply(1:nrow(X), function(i) c_posterior_approximation_vec(X[i,], mu_, solve(S), Binv))
-    MU_rnd = t(sapply(A, function(pars) mvtnorm::rmvnorm(1, pars[,d+1], pars[,1:d])))
-    MU = t(apply(X, 1, l_lrnm_join_maximum, mu_, solve(S), Binv))
-    mu_new = colMeans(MU)
+    
+    H1 = t(sapply(A, function(a) a[,d+1]))
+    # H2 = t(apply(X, 1, l_lrnm_join_maximum, mu_, solve(S), Binv))
+    COV1 = apply(sapply(A, function(a) a[,1:d], simplify = 'array'), 1:2, mean)
+    H1_rnd = t(sapply(A, function(pars) mvtnorm::rmvnorm(1, pars[,d+1], pars[,1:d])))
+    
+    mu_new = colMeans(H1)
     if(max(abs(mu_new - mu_)) < 0.001){ # avoid degenerate cases
       mu_ = mu_new
       break
@@ -28,7 +33,9 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
     mu_ = mu_new
     cov_ = cov(MU_rnd)
   }
-  t(apply(X, 1, l_lrnm_join_maximum, mu_, solve(S), Binv))
+  cat('Initial cov:\n')
+  print(cov(MU))
+  MU
 }
 simulation = function(N, n, S){
   generator = params[[S]]
