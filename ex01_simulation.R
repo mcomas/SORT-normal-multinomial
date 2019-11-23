@@ -12,7 +12,7 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
   d = ncol(X)-1
   cov_ = diag(d)
   iter = 0
-  
+  w = 0.75
   while(iter < 1000){
     iter  = iter + 1
     S = cov_
@@ -23,7 +23,7 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
     H1 = t(sapply(A, function(a) a[,d+1]))
     # H2 = t(apply(X, 1, l_lrnm_join_maximum, mu_, solve(S), Binv))
     COV1 = apply(sapply(A, function(a) a[,1:d], simplify = 'array'), 1:2, mean)
-    H1_rnd = t(sapply(A, function(pars) mvtnorm::rmvnorm(1, pars[,d+1], pars[,1:d])))
+    H1_rnd = t(sapply(A, function(pars) mvtnorm::rmvnorm(1, pars[,d+1], w^iter*pars[,1:d])))
     
     mu_new = colMeans(H1)
     if(max(abs(mu_new - mu_)) < 0.001){ # avoid degenerate cases
