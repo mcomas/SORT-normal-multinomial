@@ -7,6 +7,7 @@ lrnm_dm.init = function(X){
 }
 lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
   cat('Laplace init\n')
+  size = mean(rowSums(X))
   mu_ = coordinates(colSums(X), B)
   Binv = t(MASS::ginv(B))
   d = ncol(X)-1
