@@ -12,7 +12,7 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
   d = ncol(X)-1
   cov_ = diag(d)
   iter = 0
-  w = 0.75
+  w = pmin(1, ncol(X) / sqrt(mean(rowSums(X))))
   while(iter < 1000){
     iter  = iter + 1
     S = cov_
