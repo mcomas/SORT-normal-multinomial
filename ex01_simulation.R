@@ -9,14 +9,13 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
   mu_ = coordinates(colSums(X), B)
   Binv = t(MASS::ginv(B))
   d = ncol(X)-1
-  N = mean(rowSums(X))
   cov_ = diag(d)
   iter = 0
-  w = 0.99
+  
   while(iter < 1000){
     iter  = iter + 1
     eig = eigen(cov_)
-    S = t(eig$vectors) %*% diag(pmax(eig$values, quantile(eig$values, w^log(N^d))))  %*% eig$vectors
+    S = t(eig$vectors) %*% diag(pmax(eig$values, mean(eig$values)))  %*% eig$vectors
     MU = t(apply(X, 1, l_lrnm_join_maximum, mu_, solve(S), Binv))
     mu_new = colMeans(MU)
     if(max(abs(mu_new - mu_)) < 0.001){ # avoid degenerate cases
