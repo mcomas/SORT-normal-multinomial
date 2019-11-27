@@ -55,7 +55,7 @@ library(ggplot2)
 #   theme_minimal()
 
 ggplot(data=dplot) +
-  # geom_point(aes(x=size, y=m, col=method), stat = 'identity') +
+  geom_point(aes(x=size, y=m, col=method), stat = 'identity') +
   geom_line(aes(x=size, y=m, col=method, group=method), stat = 'identity') +
   facet_grid(variable~s, scale = 'free_y') +
   theme_minimal()

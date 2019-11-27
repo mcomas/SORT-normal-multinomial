@@ -1,4 +1,4 @@
-source('init_lrnm.R')
+source('init_lrnm_ex03.R')
 
 evaluate = function(h_pi, H_p){
   mean(sqrt(colSums( (t(H_p) - h_pi)^2 )))
