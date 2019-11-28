@@ -49,7 +49,7 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
 
     mu_ = mu_new
     cov_ = sigma_new
-    if(CONTRACT_SCENARIO & iter > 5 & median(eig$values) < 1e-5){
+    if(CONTRACT_SCENARIO & iter > 5){
       CONTRACT_SCENARIO = FALSE
       mu_ = coordinates(colSums(X), B)
       cov_ = diag(d)

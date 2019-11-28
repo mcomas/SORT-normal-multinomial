@@ -30,7 +30,14 @@ R3_1 = lapply(1:20, function(n_){
   summ = lrnm_laplace.init(X)
   summ
 })
-lapply(R3_1, function(s) sapply(s$sigma1, function(s_) summary(eigen(s_)$values)))
+R3_2 = lapply(1:20, function(n_){
+  X = ex03(S = 2, n = n_)
+  summ = lrnm_laplace.init(X)
+  summ
+})
+lapply(R3_1, function(s) sapply(s$mu, function(s_) s_))
+
+lapply(R3_1[1], function(s) sapply(s$sigma1, function(s_) summary(eigen(s_)$values)))
 lapply(R3_1, function(s) sapply(s$sigma2, function(s_) summary(eigen(s_)$values)))
 
 max1 = lapply(R1, function(s) sapply(s$sigma1, function(s_) max(eigen(s_)$values)))
