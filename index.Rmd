@@ -6,7 +6,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, error = TRUE)
 library(data.table)
 library(ggplot2)
 ```
@@ -84,3 +84,75 @@ ggplot(data=dplot) +
   facet_wrap(~s, scale = 'free_y', ncol = 3) +
   theme_minimal()
 ```
+
+## Example 03
+
+```{r, include=FALSE}
+library(dplyr)
+library(tidyr)
+```
+
+```{r, fig.width=9, fig.height=6.5}
+library(data.table)
+PATH = 'ex03'
+fls = list.files(PATH, pattern = "*.RData")
+source('ex03_scenarios.R')
+
+load('ex03_parliament2015.RData')
+nvotes = parliament2015 %>% 
+  select(name, jxsi:cup) %>%
+  gather(key=party, value=votes, -name) %>%
+  group_by(name) %>%
+  summarise(
+    total = sum(votes)
+  )
+nvotes.sub = nvotes %>% 
+  subset(total > 1000) %>%
+  left_join(parliament2015 %>% select(name, jxsi:cup), by='name')
+
+X0 = nvotes.sub %>% 
+  select(jxsi:cup)
+
+pattern_build = "n_([0-9]+)-s_([0-9]+)-seed_([0-9]+)"
+data = rbindlist(lapply(fls, function(fl){
+  # print(fl)
+  load(file.path(PATH, fl))
+  
+  PATTERN = gsub('.RData', '', fl)
+  ld = lapply(list(
+    'dm' = 'dm',
+    'lrnm-dm' = 'lrnm-dm',
+    'lrnm-laplace' = 'lrnm-laplace'
+  ), function(v)
+    sapply(RESULTS, function(res, v)
+      res[[v]], v))
+  
+  n = as.integer(sub(pattern_build, "\\1", PATTERN))
+  s = as.numeric(sub(pattern_build, "\\2", PATTERN))
+  seed = as.numeric(sub(pattern_build, "\\3", PATTERN))
+  size = mean(params[[s]](rowSums(X0), n))
+  
+  d = rbindlist(lapply(ld, function(d) as.data.table(t(d))), idcol = 'method')
+  d = melt(d, measure.vars = c('paired.dist', 'cov.frobenius',  'stress'))
+  d[,n := n]
+  d[,s := s]
+  d[,seed := seed]
+  d[,size := size]
+  d
+}))
+
+dplot = data[, .(m = mean(value)), .(method, variable, size, s)]
+
+library(ggplot2)
+# ggplot(data=data) +
+#   geom_boxplot(aes(x=factor(n),y=value, fill=variable), position=position_dodge()) +
+#   facet_wrap(~s, scale = 'free_y') +
+#   theme_minimal()
+
+ggplot(data=dplot) +
+  geom_point(aes(x=size, y=m, col=method), stat = 'identity') +
+  geom_line(aes(x=size, y=m, col=method, group=method), stat = 'identity') +
+  facet_grid(variable~s, scale = 'free_y') +
+  theme_minimal()
+```
+
