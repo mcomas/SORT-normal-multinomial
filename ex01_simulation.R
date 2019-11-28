@@ -1,4 +1,4 @@
-source('init_lrnm_ex03.R')
+source('init_lrnm_analise.R')
 
 evaluate = function(h_pi, H_p){
   mean(sqrt(colSums( (t(H_p) - h_pi)^2 )))
@@ -32,7 +32,7 @@ simulation = function(N, n, S){
   ## LRNM initialisation with Laplace
   t.lrnm_laplace = proc.time()
   quasi_random = sobol
-  H.lrnm_laplace = lrnm_laplace.init(XZ)
+  H.lrnm_laplace = lrnm_laplace.init(XZ)$H
   Z_quasi = matrix(quasi_random(n = 10000, normal = TRUE, dim = length(p)-1), ncol=length(p)-1)
   fit.lrnm_laplace = fit_lrnm(XZ, probs = TRUE, Z = Z_quasi, H.ini = H.lrnm_laplace)
   t.lrnm_laplace = proc.time() - t.lrnm_laplace

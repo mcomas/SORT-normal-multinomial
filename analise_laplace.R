@@ -3,6 +3,9 @@ library(coda.count)
 library(dirmult)
 library(randtoolbox)
 library(digest)
+library(HardyWeinberg)
+library(dplyr)
+library(tidyr)
 
 source('init_lrnm_analise.R')
 source('data_generations.R')
@@ -12,20 +15,34 @@ R1 = lapply(1:9, function(s){
   summ = lrnm_laplace.init(X)
   summ
 })
+lapply(R1, function(s) sapply(s$sigma1, function(s_) summary(eigen(s_)$values)))
 
 R2 = lapply(1:6, function(s){
   X = ex02(S = s, N = 100, n = 50)
   summ = lrnm_laplace.init(X)
   summ
 })
-lapply(R2, function(ss) sapply(ss$sigma1, function(s) eigen(s)$values))
+lapply(R2, function(s) sapply(s$sigma1, function(s_) summary(eigen(s_)$values)))
 
 
-sapply(summ$sigma1, function(s) log(prop.table(eigen(s)$values) / prop.table(rep(1, length(eigen(s)$values)))) )
+R3_1 = lapply(1:20, function(n_){
+  X = ex03(S = 1, n = n_)
+  summ = lrnm_laplace.init(X)
+  summ
+})
+lapply(R3_1, function(s) sapply(s$sigma1, function(s_) summary(eigen(s_)$values)))
+lapply(R3_1, function(s) sapply(s$sigma2, function(s_) summary(eigen(s_)$values)))
 
-X = ex03(S = 1, n = 1)
-summ = lrnm_laplace.init(X)
-sapply(summ$sigma1, function(s) eigen(s)$values)
+max1 = lapply(R1, function(s) sapply(s$sigma1, function(s_) max(eigen(s_)$values)))
+max2 = lapply(R2, function(s) sapply(s$sigma1, function(s_) max(eigen(s_)$values)))
+max3_1 = lapply(R3_1[1:5], function(s) sapply(s$sigma1, function(s_) max(eigen(s_)$values)))
+
+median1 = lapply(R1, function(s) sapply(s$sigma1, function(s_) median(eigen(s_)$values)))
+median2 = lapply(R2, function(s) sapply(s$sigma1, function(s_) median(eigen(s_)$values)))
+median3_1 = lapply(R3_1[1:5], function(s) sapply(s$sigma1, function(s_) median(eigen(s_)$values)))
 
 
+sapply(max1, length)
+sapply(max2, length)
+sapply(max3_1, length)
 

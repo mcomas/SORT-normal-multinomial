@@ -3,14 +3,16 @@ lrnm_dm.init = function(X){
   coordinates(t(t(X) + fit.dm_init$gamma))
 }
 lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
-  mu_ = coordinates(colSums(X), B)
-  
   Binv = t(MASS::ginv(B))
   d = ncol(X)-1
+  
+  mu_ = coordinates(colSums(X), B)
   cov_ = diag(d)
+  
   iter = 0
-  div = 1
-  summ = list('mean' = list(), 'cov' = list())
+  
+  summ = list()
+  CONTRACT_SCENARIO = TRUE
   while(iter < 100){
     iter  = iter + 1
     # Avoid contraction during initialisation
@@ -30,28 +32,29 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
     # MU = t(apply(X, 1, l_lrnm_join_maximum, mu_, solve(S), Binv))
   
     summ$mu[[iter]] = apply(MU, 1, mean)
-    summ$sigma1[[iter]] = cov(MU_rnd) / (d^div)
-    summ$sigma2[[iter]] = apply(SIGMA, 1:2, mean)
+    summ$sigma1[[iter]] = cov(MU_rnd) / d
+    summ$sigma2[[iter]] = cov(MU_rnd) # apply(SIGMA, 1:2, mean)
+    # summ$sigma3[[iter]] = cov(t(MU))
     
     mu_new = summ$mu[[iter]]
-    sigma_new = summ$sigma1[[iter]]
+    if(CONTRACT_SCENARIO){
+      sigma_new = summ$sigma1[[iter]]
+    }else{
+      sigma_new = summ$sigma2[[iter]]
+    }
     
-    # sigma_new = apply(SIGMA, 1:2, mean)
-    # print(mu_new)
-    if(max(abs(mu_new - mu_)) < 0.001){ # avoid degenerate cases
-      mu_ = mu_new
+    if(max(abs(mu_new - mu_)) < 0.001){ 
       break
     }
-    
-    if(iter %% 10 == 0){
-      # mu_ = coordinates(colSums(X), B)
-      # cov_ = diag(d)
-      div = div + 1
-    }
+
     mu_ = mu_new
     cov_ = sigma_new
-    
-    
+    if(CONTRACT_SCENARIO & iter > 5 & median(eig$values) < 1e-5){
+      CONTRACT_SCENARIO = FALSE
+      mu_ = coordinates(colSums(X), B)
+      cov_ = diag(d)
+      iter = 0
+    }
   }
   summ$iter = iter
   summ$H = t(MU)

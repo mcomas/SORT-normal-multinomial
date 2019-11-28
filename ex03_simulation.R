@@ -1,4 +1,4 @@
-source('init_lrnm_ex03.R')
+source('init_lrnm_analise.R')
 
 evaluate = function(H_gs, H_p){
   c('paired.dist' = mean(apply(H_gs-H_p, 1, function(x) sqrt(sum(x^2)))),
@@ -55,7 +55,7 @@ simulation = function(n, S){
   ## LRNM initialisation with Laplace
   t.lrnm_laplace = proc.time()
   quasi_random = sobol
-  H.lrnm_laplace = lrnm_laplace.init(XZ)
+  H.lrnm_laplace = lrnm_laplace.init(XZ)$H
   Z_quasi = matrix(quasi_random(n = 10000, normal = TRUE, dim = ncol(XZ)-1), ncol=ncol(XZ)-1)
   fit.lrnm_laplace = fit_lrnm(XZ, probs = TRUE, Z = Z_quasi, H.ini = H.lrnm_laplace)
   t.lrnm_laplace = proc.time() - t.lrnm_laplace
