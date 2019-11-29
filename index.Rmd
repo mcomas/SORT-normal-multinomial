@@ -18,7 +18,7 @@ PATH = 'ex01'
 fls = list.files(PATH, pattern = "*.RData")
 
 pattern_build = "N_([0-9]+)-n_([0-9]+)-s_([0-9]+)-seed_([0-9]+)"
-data = rbindlist(lapply(fls, function(fl){
+data1 = rbindlist(lapply(fls, function(fl){
   # print(fl)
   load(file.path(PATH, fl))
   
@@ -40,9 +40,9 @@ data = rbindlist(lapply(fls, function(fl){
   d
 }))
 
-dplot = data[, .(m = mean(value)), .(variable, N, n, s)]
+dplot1 = data1[, .(m = mean(value)), .(variable, N, n, s)]
 
-ggplot(data=dplot) +
+ggplot(data=dplot1) +
   geom_bar(aes(x=factor(n),y=m, fill=variable), stat = 'identity', position=position_dodge()) +
   facet_wrap(~s, scale = 'free_y', ncol = 3) +
   theme_minimal()
@@ -55,7 +55,7 @@ PATH = 'ex02'
 fls = list.files(PATH, pattern = "*.RData")
 
 pattern_build = "N_([0-9]+)-n_([0-9]+)-s_([0-9]+)-seed_([0-9]+)"
-data = rbindlist(lapply(fls, function(fl){
+data2 = rbindlist(lapply(fls, function(fl){
   # print(fl)
   load(file.path(PATH, fl))
   
@@ -77,9 +77,9 @@ data = rbindlist(lapply(fls, function(fl){
   d
 }))
 
-dplot = data[, .(m = mean(value)), .(variable, N, n, s)]
+dplot2 = data2[, .(m = mean(value)), .(variable, N, n, s)]
 
-ggplot(data=dplot) +
+ggplot(data=dplot2) +
   geom_bar(aes(x=factor(n),y=m, fill=variable), stat = 'identity', position=position_dodge()) +
   facet_wrap(~s, scale = 'free_y', ncol = 3) +
   theme_minimal()
