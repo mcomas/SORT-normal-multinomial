@@ -2,22 +2,34 @@ lrnm_dm.init = function(X){
   fit.dm_init = dirmult(X, trace = FALSE)
   coordinates(t(t(X) + fit.dm_init$gamma))
 }
+evaluate_multinomial = function(X){
+  d = ncol(X)-1
+  n_ = rowSums(X)
+  
+  p = prop.table(colSums(X))
+  n = rowSums(X)
+  E = n %*% t(p)
+  chisq.m1 = rowSums( (X - E)^2 / E )
+  test1 = median(1-pchisq(chisq.m1, d))
+  
+  S = cov(X)[-1,-1]
+  V0 = (mean(n_) * ( diag(p) - p %*% t(p) ))[-1,-1]
+  N = nrow(X)
+  LH0 = - N / 2 * log(det(V0)) - N / 2 * sum(diag(solve(V0) %*% S))
+  LH1 = - N / 2 * log(det(S)) - N * d / 2
+  chisq.m2 = 2 * (LH1 - LH0)
+  test2 = 1-pchisq(chisq.m2, d*(d+1)/2)
+  c(test1, test2)
+}
 lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
   Binv = t(MASS::ginv(B))
   d = ncol(X)-1
   
   N = nrow(X)
   
-  chisq_ = function(X){
-    X_ = X[sample(seq_len(nrow(X)), replace = T),]
-    p = prop.table(colSums(X_))
-    n = rowSums(X_)
-    E = n %*% t(p)
-    mean( 1 - pchisq(rowSums( (X_ - E)^2 / E ), d) )
-  }
-  q95 = quantile(replicate(100, chisq_(X)), 0.95)
-  cat('contract:', q95, '\n')
-  CONTRACT = q95 >= 0.5
+  multinomial_test = evaluate_multinomial(X)
+  cat('contract:', multinomial_test, '\n')
+  CONTRACT = all(multinomial_test > 0.01/nrow(X))
   
   mu_ = coordinates(colSums(X), B)
   cov_ = diag(d)
@@ -30,10 +42,10 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
     
     # Avoid contraction during initialisation
     eig = eigen(cov_)
-    # print(head(eig$values, n = 5))
-    if(max(eig$values) < 1e-3) break
-    eig_values = pmax(quantile(eig$values, 0.1), 1e-05) / min(eig$values) * eig$values
-    S_ = eig$vectors %*% diag(eig_values)  %*% t(eig$vectors)
+    if(CONTRACT) eig_values = rep(mean(eig$values), d)
+    else eig_values = pmax(eig$values, 1e-08)
+    
+    S_ = eig$vectors %*% diag(eig_values) %*% t(eig$vectors)
     
     # Posterior laplace approximation
     A = lapply(split(X,seq(NROW(X))), c_posterior_approximation_vec, mu_, solve(S_), Binv)
@@ -42,13 +54,8 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
     SIGMA = sapply(A, function(a) a[,1:d], simplify = 'array')
     MU_rnd = t(sapply(1:nrow(X), function(i) mvtnorm::rmvnorm(1, MU[,i], SIGMA[,,i])))
     
-    # M2 = sapply(1:N, function(i) SIGMA[,,i] + MU[,i] %*% t(MU[,i]), simplify = 'array')
-    # 
-    # Mnew = apply(MU, 1, mean)
-    # COV = apply(M2, 1:2, mean) - Mnew %*% t(Mnew)
-    
     if(CONTRACT){
-      Snew = cov(MU_rnd) / d
+      Snew = cov(t(MU))
     }else{
       # I = I + 1
       Snew = ((iter-1) * Snew + cov(MU_rnd)) / iter

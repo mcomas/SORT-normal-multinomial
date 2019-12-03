@@ -13,6 +13,8 @@ library(ggplot2)
 
 ## Example 01
 
+### N=100
+
 ```{r, fig.width=9, fig.height=6.5}
 PATH = 'ex01'
 fls = list.files(PATH, pattern = "*.RData")
@@ -40,7 +42,44 @@ data1 = rbindlist(lapply(fls, function(fl){
   d
 }))
 
-dplot1 = data1[, .(m = mean(value)), .(variable, N, n, s)]
+dplot1 = data1[N==100, .(m = mean(value)), .(variable, N, n, s)]
+
+ggplot(data=dplot1) +
+  geom_bar(aes(x=factor(n),y=m, fill=variable), stat = 'identity', position=position_dodge()) +
+  facet_wrap(~s, scale = 'free_y', ncol = 3) +
+  theme_minimal()
+```
+
+### N=1000
+
+```{r, fig.width=9, fig.height=6.5}
+PATH = 'ex01'
+fls = list.files(PATH, pattern = "*.RData")
+
+pattern_build = "N_([0-9]+)-n_([0-9]+)-s_([0-9]+)-seed_([0-9]+)"
+data1 = rbindlist(lapply(fls, function(fl){
+  # print(fl)
+  load(file.path(PATH, fl))
+  
+  PATTERN = gsub('.RData', '', fl)
+  ld = lapply(list(
+    'dm' = 'dm',
+    'lrnm-dm' = 'lrnm-dm',
+    'lrnm-laplace' = 'lrnm-laplace'
+  ), function(v)
+    sapply(RESULTS, function(res, v)
+      res[[v]], v))
+  
+  d = as.data.table(ld)
+  d = melt(d, measure.vars = names(ld))
+  d[,N := as.integer(sub(pattern_build, "\\1", PATTERN))]
+  d[,n := as.integer(sub(pattern_build, "\\2", PATTERN))]
+  d[,s := as.numeric(sub(pattern_build, "\\3", PATTERN))]
+  d[,seed := as.numeric(sub(pattern_build, "\\4", PATTERN))]
+  d
+}))
+
+dplot1 = data1[N==1000, .(m = mean(value)), .(variable, N, n, s)]
 
 ggplot(data=dplot1) +
   geom_bar(aes(x=factor(n),y=m, fill=variable), stat = 'identity', position=position_dodge()) +
@@ -49,6 +88,8 @@ ggplot(data=dplot1) +
 ```
 
 ## Example 02
+
+### N=100
 
 ```{r, fig.width=9, fig.height=6.5}
 PATH = 'ex02'
@@ -77,7 +118,44 @@ data2 = rbindlist(lapply(fls, function(fl){
   d
 }))
 
-dplot2 = data2[, .(m = mean(value)), .(variable, N, n, s)]
+dplot2 = data2[N==100, .(m = mean(value)), .(variable, N, n, s)]
+
+ggplot(data=dplot2) +
+  geom_bar(aes(x=factor(n),y=m, fill=variable), stat = 'identity', position=position_dodge()) +
+  facet_wrap(~s, scale = 'free_y', ncol = 3) +
+  theme_minimal()
+```
+
+### N=1000
+
+```{r, fig.width=9, fig.height=6.5}
+PATH = 'ex02'
+fls = list.files(PATH, pattern = "*.RData")
+
+pattern_build = "N_([0-9]+)-n_([0-9]+)-s_([0-9]+)-seed_([0-9]+)"
+data2 = rbindlist(lapply(fls, function(fl){
+  # print(fl)
+  load(file.path(PATH, fl))
+  
+  PATTERN = gsub('.RData', '', fl)
+  ld = lapply(list(
+    'dm' = 'dm',
+    'lrnm-dm' = 'lrnm-dm',
+    'lrnm-laplace' = 'lrnm-laplace'
+  ), function(v)
+    sapply(RESULTS, function(res, v)
+      res[[v]], v))
+  
+  d = as.data.table(ld)
+  d = melt(d, measure.vars = names(ld))
+  d[,N := as.integer(sub(pattern_build, "\\1", PATTERN))]
+  d[,n := as.integer(sub(pattern_build, "\\2", PATTERN))]
+  d[,s := as.numeric(sub(pattern_build, "\\3", PATTERN))]
+  d[,seed := as.numeric(sub(pattern_build, "\\4", PATTERN))]
+  d
+}))
+
+dplot2 = data2[N==1000, .(m = mean(value)), .(variable, N, n, s)]
 
 ggplot(data=dplot2) +
   geom_bar(aes(x=factor(n),y=m, fill=variable), stat = 'identity', position=position_dodge()) +

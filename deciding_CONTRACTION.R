@@ -10,31 +10,36 @@ library(tidyr)
 # source('init_lrnm_analise.R')
 source('data_generations.R')
 
+evaluate_multinomial = function(X){
+  d = ncol(X)-1
+  n_ = rowSums(X)
+  
+  p = prop.table(colSums(X))
+  n = rowSums(X)
+  E = n %*% t(p)
+  chisq.m1 = rowSums( (X - E)^2 / E )
+  test1 = median(1-pchisq(chisq.m1, d))
+  
+  I = 1
+  S = cov(X)[-I,-I]
+  V0 = (mean(n_) * ( diag(p) - p %*% t(p) ))[-I,-I]
+  N = nrow(X)
+  LH0 = - N / 2 * log(det(V0)) - N / 2 * sum(diag(solve(V0) %*% S))
+  LH1 = - N / 2 * log(det(S)) - N * d / 2
+  chisq.m2 = 2 * (LH1 - LH0)
+  test2 = 1-pchisq(chisq.m2, d*(d+1)/2)
+  c(test1, test2)
+}
+
 
 res_1 = replicate(100, {
-  X = ex01(S = 3, N = 100, n = 50)
-  d = ncol(X)-1
-  chisq_ = function(X){
-    X_ = X[sample(seq_len(nrow(X)), replace = T),]
-    p = prop.table(colSums(X_))
-    n = rowSums(X_)
-    E = n %*% t(p)
-    mean( 1 - pchisq(rowSums( (X_ - E)^2 / E ), d) )
-  }
-  quantile(replicate(100, chisq_(X)), 0.95)
+  X = ex01(S = 3, N = 1000, n = 50)
+  evaluate_multinomial(X)
 })
 
 res_3 = replicate(100, {
   X = ex03(S = 2, n = 1)
-  d = ncol(X)-1
-  chisq_ = function(X){
-    X_ = X[sample(seq_len(nrow(X)), replace = T),]
-    p = prop.table(colSums(X_))
-    n = rowSums(X_)
-    E = n %*% t(p)
-    mean( 1 - pchisq(rowSums( (X_ - E)^2 / E ), d) )
-  }
-  quantile(replicate(100, chisq_(X)), 0.95)
+  evaluate_multinomial(X)
 })
 
 apply(t(res_1), 2, quantile, 0.95)

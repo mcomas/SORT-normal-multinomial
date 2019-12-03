@@ -4,7 +4,7 @@ FIRST = 1
 LAST = 1
 CFLAGS = -c -g -D $(OUTPUT) -D $(FIRST) -D $(LAST)
 
-L_N = 100
+L_N = 1000
 L_n = 50 100 200 500
 L_s = 1 2 3 4 5 6
 L_seed = $(shell seq ${FIRST} ${LAST})
