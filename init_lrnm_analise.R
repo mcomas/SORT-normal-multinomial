@@ -76,7 +76,7 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
     mu_new = summ$mu[[iter]]
     sigma_new = summ$sigma[[iter]]
     
-    if(max(abs(mu_new - mu_)) < 0.001){ 
+    if(max(abs(mu_new - mu_)) < 0.001 & iter > 1){ 
       break
     }
     
