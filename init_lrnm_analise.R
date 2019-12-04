@@ -22,14 +22,18 @@ evaluate_multinomial = function(X){
   c(test1, test2)
 }
 lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
-  Binv = t(MASS::ginv(B))
   d = ncol(X)-1
   
   N = nrow(X)
   
+  p = prop.table(colMeans(X))
+  n_ = rowSums(X)
+  V0 = (mean(n_) * ( diag(p) - p %*% t(p) ))
+  EIG0 = eigen(t(B) %*% V0 %*% B)
+  
   multinomial_test = evaluate_multinomial(X)
   cat('contract:', multinomial_test, '\n')
-  CONTRACT = all(multinomial_test > 0.01/nrow(X))
+  CONTRACT = multinomial_test[1] > 0.01 & multinomial_test[2] > 1e-14
   
   mu_ = coordinates(colSums(X), B)
   cov_ = diag(d)
@@ -42,41 +46,40 @@ lrnm_laplace.init = function(X, B = ilr_basis(ncol(X))){
     
     # Avoid contraction during initialisation
     eig = eigen(cov_)
-    if(CONTRACT) eig_values = rep(mean(eig$values), d)
-    else eig_values = pmax(eig$values, 1e-08)
-    
-    S_ = eig$vectors %*% diag(eig_values) %*% t(eig$vectors)
+    if(CONTRACT){
+      
+      eig_values = rep(median(eig$values), d)
+      S_ = EIG0$vectors %*% diag(eig_values * prop.table(EIG0$values)) %*% t(EIG0$vectors)
+    }else{
+      eig_values = pmax(eig$values, 1e-08)
+      S_ = eig$vectors %*% diag(eig_values) %*% t(eig$vectors)
+    } 
     
     # Posterior laplace approximation
-    A = lapply(split(X,seq(NROW(X))), c_posterior_approximation_vec, mu_, solve(S_), Binv)
+    A = c_posterior_approximation(X, mu_, S_, B)
     
-    MU = sapply(A, function(a) a[,d+1], simplify = 'array')
-    SIGMA = sapply(A, function(a) a[,1:d], simplify = 'array')
+    MU = A[,d+1,]
+    SIGMA = A[,1:d,]
     MU_rnd = t(sapply(1:nrow(X), function(i) mvtnorm::rmvnorm(1, MU[,i], SIGMA[,,i])))
     
     if(CONTRACT){
-      Snew = cov(t(MU))
+      Mnew = rowMeans(MU)
+      Snew = (MU - mu_) %*% t(MU - mu_) / N
     }else{
-      # I = I + 1
+      Mnew = rowMeans(MU)
       Snew = ((iter-1) * Snew + cov(MU_rnd)) / iter
     }
-  
-    summ$mu[[iter]] = apply(MU, 1, mean)
+    
+    summ$mu[[iter]] = Mnew
     summ$sigma[[iter]] = Snew
     
     mu_new = summ$mu[[iter]]
     sigma_new = summ$sigma[[iter]]
     
-    # if( CONTRACT & iter > 4 ){
-    #   CONTRACT = FALSE
-    #   I = 0
-    #   mu_new = coordinates(colSums(X), B)
-    #   sigma_new = diag(d)
-    # }
     if(max(abs(mu_new - mu_)) < 0.001){ 
       break
     }
-
+    
     mu_ = mu_new
     cov_ = sigma_new
   }
