@@ -76,24 +76,7 @@ ggplot(data=dplot) +
 
 ggplot(data=dplot) +
   geom_hline(yintercept = 0, col = 'red') +
-  geom_boxplot(aes(x=rn,y=m)) +
-  facet_grid(SIGMA~MU, scales = 'free_y') +
+  geom_boxplot(aes(x=variable,y=m)) +
+  facet_grid(VAR~NORM, scales = 'free_y') +
   theme_minimal()
 
-dplot.summ = dplot[,.(m = mean(m), s = sd(m)), .(rn, MU, SIGMA, AGREEMENT)]
-ggplot(data=dplot.summ) +
-  geom_hline(yintercept = 0, col = 'red') +
-  geom_point(aes(x=rn, y=m, col = AGREEMENT), position = position_dodge(width = 1)) +
-  geom_errorbar(aes(x=rn,ymin =m-s,ymax=m+s,col=AGREEMENT), width=0.2, position = position_dodge(width = 1)) +
-  facet_grid(SIGMA~MU) +
-  theme_minimal()
-
-ggplot(data=dplot.summ) +
-  geom_hline(yintercept = 0, col = 'red') +
-  geom_point(aes(x=rn, y=m, col = AGREEMENT), position = position_dodge(width = 1)) +
-  geom_errorbar(aes(x=rn,ymin =m-s,ymax=m+s, col = AGREEMENT), width=0.2, position = position_dodge(width = 1)) +
-  facet_grid(SIGMA~MU) +
-  theme_minimal() +
-  coord_cartesian(ylim = c(-0.001, 0.001))
-
-# The lower the variance 
