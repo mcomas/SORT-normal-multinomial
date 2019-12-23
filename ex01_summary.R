@@ -38,4 +38,26 @@ ggplot(data=dplot) +
   facet_wrap(~s, scale = 'free_y', ncol = 3) +
   theme_minimal()
 
-
+## Times 
+times = rbindlist(lapply(fls, function(fl){
+  # print(fl)
+  load(file.path(PATH, fl))
+  
+  PATTERN = gsub('.RData', '', fl)
+  ld = lapply(list(
+    'dm' = 'dm',
+    'lrnm-dm' = 'lrnm-dm',
+    'lrnm-laplace' = 'lrnm-laplace'
+  ), function(v)
+    sapply(RESULTS, function(res, v)
+      res$times[[v]][1], v))
+  
+  d = as.data.table(ld)
+  d = melt(d, measure.vars = names(ld))
+  d[,N := as.integer(sub(pattern_build, "\\1", PATTERN))]
+  d[,n := as.integer(sub(pattern_build, "\\2", PATTERN))]
+  d[,s := as.numeric(sub(pattern_build, "\\3", PATTERN))]
+  d[,seed := as.numeric(sub(pattern_build, "\\4", PATTERN))]
+  d
+}))
+dcast(times[,.(m = mean(value)), .(variable, s)], s~variable)
