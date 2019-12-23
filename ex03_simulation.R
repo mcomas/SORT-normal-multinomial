@@ -1,4 +1,4 @@
-source('init_lrnm_analise.R')
+source('init_lrnm.R')
 
 evaluate = function(H_gs, H_p){
   c('paired.dist' = mean(apply(H_gs-H_p, 1, function(x) sqrt(sum(x^2)))),
