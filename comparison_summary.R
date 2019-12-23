@@ -3,7 +3,7 @@ PATH = 'comparison'
 fls = list.files(PATH)
 
 pattern_build = "DIM_(.+)-SIZE_(.+)-NORM_(.+)-VAR_(.+)-AGREEMENT_(.+)-SEED_([0-9]+)"
-data = rbindlist(lapply(fls, function(fl){
+data.m1 = rbindlist(lapply(fls, function(fl){
   # print(fl)
   load(file.path(PATH, fl))
   
@@ -21,40 +21,59 @@ data = rbindlist(lapply(fls, function(fl){
   d[,SEED := as.integer(sub(pattern_build, "\\6", PATTERN))]
   d
 }))
+data.m2 = rbindlist(lapply(fls, function(fl){
+  # print(fl)
+  load(file.path(PATH, fl))
+  
+  PATTERN = gsub('.RData', '', fl)
+  d = as.data.table(RESULTS$m2.mc)[,exact := 'mc']
+  # d = rbindlist(list(
+  #   as.data.table(RESULTS$m1.mc)[,exact := 'mc'],
+  #   as.data.table(RESULTS$m1.mcmc)[,exact := 'mcmc']))
+  d = melt(d, measure.vars = c('MC','MC-AV','QMC','MCMC'))
+  d[,DIM := as.integer(sub(pattern_build, "\\1", PATTERN))]
+  d[,SIZE := as.integer(sub(pattern_build, "\\2", PATTERN))]
+  d[,NORM := as.numeric(sub(pattern_build, "\\3", PATTERN))]
+  d[,VAR := as.matrix(as.numeric(sub(pattern_build, "\\4", PATTERN)))]
+  d[,AGREEMENT := as.logical(sub(pattern_build, "\\5", PATTERN))]
+  d[,SEED := as.integer(sub(pattern_build, "\\6", PATTERN))]
+  d
+}))
 
-summary(glm(value~variable+DIM+SIZE+NORM+VAR, data=data))
+m1_all = lm(log(value)~variable+DIM+SIZE+NORM+VAR+AGREEMENT, 
+            data=data.m1)
+m2_all = lm(log(value)~variable+DIM+SIZE+NORM+VAR+AGREEMENT, 
+            data=data.m2)
 
-# ggplot(data=data) +
-#   geom_hline(yintercept = 0, col = 'red') +
-#   geom_boxplot(aes(x=factor(SIZE),y=value,fill=variable)) +
-#   facet_grid(NORM+VAR~DIM, scales = 'free_y') +
-#   theme_minimal()
-# 
-# dplot1 = data[, .(
-#   m = median(value, na.rm = TRUE),
-#   q1 = quantile(value, 0.025, na.rm = TRUE),
-#   q3 = quantile(value, 0.975, na.rm = TRUE)
-# ),
-# .(variable, exact, DIM, SIZE, NORM, VAR, AGREEMENT)]
-# 
-# ggplot(data=dplot1) +
-#   geom_hline(yintercept = 0, col = 'red') +
-#   geom_errorbar(aes(x=variable,y=m,col=factor(SIZE), ymin=q1,ymax=q3), position = position_dodge()) +
-#   facet_grid(DIM+NORM~VAR, scales = 'free_y') +
-#   theme_minimal()
-# 
-# summary(glm(value~variable+DIM+SIZE+NORM+VAR, data=data, subset = exact == 'mc'))
-# summary(glm(value~variable+DIM+SIZE+NORM+VAR, data=data, subset = exact == 'mcmc'))
-
+stargazer::stargazer(list(m1_all, m2_all), single.row = TRUE, apply.coef = exp, 
+                     ci = TRUE, type = 'latex', star.cutoffs = NA)
 
 library(ggplot2)
-dplot = data[, .(
+dplot.m1 = data.m1[, .(
   n = length(value) - sum(is.na(value)),
   m = median(value, na.rm = TRUE),
   q1 = quantile(value, 0.25, na.rm = TRUE),
   q3 = quantile(value, 0.75, na.rm = TRUE)
 ),
-.(variable, exact, DIM, SIZE, NORM, VAR, AGREEMENT)]
+.(variable, exact, DIM, SIZE, NORM, VAR, AGREEMENT)][,moment := 'M1']
+dplot.m2 = data.m2[, .(
+  n = length(value) - sum(is.na(value)),
+  m = median(value, na.rm = TRUE),
+  q1 = quantile(value, 0.25, na.rm = TRUE),
+  q3 = quantile(value, 0.75, na.rm = TRUE)
+),
+.(variable, exact, DIM, SIZE, NORM, VAR, AGREEMENT)][,moment := 'M2']
+dplot = rbind(dplot.m1, dplot.m2)
+
+ggplot(data=dplot) +
+  # geom_hline(yintercept = 0, col = 'red') +
+  geom_boxplot(aes(x=factor(DIM),y=m,fill=factor(VAR))) +
+  facet_grid(moment+VAR~variable, scales = 'free_y') +
+  theme_minimal() +
+  scale_y_continuous(trans = 'log', breaks = 10^c(-4, -3,-2,-1,0)) +
+  labs(y = 'Error (logarithmic scale)')
+
+
 
 ggplot(data=dplot) +
   geom_hline(yintercept = 0, col = 'red') +

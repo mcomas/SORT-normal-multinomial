@@ -32,8 +32,8 @@ if(DIM <= 6){
 simulation = function(DIM, SIZE, NORM, VAR, AGREEMENT, B = ilr_basis(DIM+1), N = 100){
   MU = rnorm(DIM)
   MU = MU/sqrt(sum(MU^2)) * NORM
-  CORR = cov2cor(as.matrix(rWishart(1, DIM, diag(DIM))[,,1]))
-  SIGMA = CORR * VAR
+  A = as.matrix(rWishart(1, DIM, diag(DIM))[,,1])
+  SIGMA = DIM * VAR / sum(diag(A)) * A 
   if(AGREEMENT){
     X = rmultinomial(1, SIZE, composition(MU))
   }else{
