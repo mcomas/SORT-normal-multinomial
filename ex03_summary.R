@@ -1,4 +1,6 @@
 library(data.table)
+library(dplyr)
+library(tidyr)
 PATH = 'ex03'
 fls = list.files(PATH, pattern = "*.RData")
 source('ex03_scenarios.R')
@@ -49,15 +51,26 @@ data = rbindlist(lapply(fls, function(fl){
 dplot = data[, .(m = mean(value)), .(method, variable, size, s)]
 
 library(ggplot2)
-# ggplot(data=data) +
-#   geom_boxplot(aes(x=factor(n),y=value, fill=variable), position=position_dodge()) +
-#   facet_wrap(~s, scale = 'free_y') +
-#   theme_minimal()
+dplot$variable = factor(dplot$variable, levels = c('paired.dist', 'cov.frobenius', 'stress'),
+                 labels = c('Average Aitchison distance',
+                            'Frobenius distance',
+                            'STRESS'))
 
-ggplot(data=dplot) +
-  geom_point(aes(x=size, y=m, col=method), stat = 'identity') +
-  geom_line(aes(x=size, y=m, col=method, group=method), stat = 'identity') +
-  facet_grid(variable~s, scale = 'free_y') +
-  theme_minimal()
+l_s = as_labeller(function(string) sprintf("Scenario %s", string))
+g = ggplot(data=dplot) +
+  # geom_point(aes(x=size, y=m, col=method), stat = 'identity') +
+  geom_line(aes(x=size, y=m, col=method, linetype = method, group=method), stat = 'identity') +
+  facet_grid(variable~s, scale = 'free', labeller = labeller(s = l_s)) +
+  theme_bw() +
+  theme(legend.position = 'top', strip.background = element_rect(fill = 'white')) +
+  labs(x = 'Number of trials (n)', y = 'Average differences', fill = 'Models:') +
+  scale_color_manual(name="",
+                     values = rainbow(3),
+                     breaks=c("dm", 'lrnm-laplace', "lrnm-dm"),
+                     labels=c("DM", "LNM (SP1)", 'LNM (SP2)')) +
+  scale_linetype_manual(name="",
+                        values = c("longdash", "solid", "dotted"),
+                     breaks=c("dm", 'lrnm-laplace', "lrnm-dm"),
+                     labels=c("DM", "LNM (SP1)", 'LNM (SP2)'))
 
-
+ggsave('ex03-parliament.pdf', g, width = 6, height = 7)

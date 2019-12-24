@@ -33,9 +33,17 @@ library(ggplot2)
 #   facet_wrap(~s, scale = 'free_y') +
 #   theme_minimal()
 
-ggplot(data=dplot) +
-  geom_bar(aes(x=factor(n),y=m, fill=variable), stat = 'identity', position=position_dodge()) +
-  facet_wrap(~s, scale = 'free_y', ncol = 3) +
-  theme_minimal()
+l_s = as_labeller(function(string) sprintf("Scenario %s", string))
+g = ggplot(data=dplot) +
+  geom_bar(aes(x=factor(n),y=m, fill=variable), col='black', stat = 'identity', position=position_dodge()) +
+  facet_wrap(~s, scale = 'free_y', ncol = 3, labeller = labeller(s = l_s)) +
+  theme_classic() +
+  labs(x = 'Number of trials (n)', y = 'Average of Aitchison distances', fill = 'Models:') +
+  theme(legend.position = 'top') +
+  scale_fill_manual(values = rainbow(3),
+                    breaks = c('dm', 'lrnm-laplace', 'lrnm-dm'),
+                    labels=c("DM", "LNM (SP1)", "LNM (SP2)"))
+
+ggsave('ex02-hardyweinberg.pdf', g, width = 7, height = 4)
 
 
