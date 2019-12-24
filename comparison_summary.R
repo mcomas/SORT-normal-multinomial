@@ -55,47 +55,80 @@ dplot.m1 = data.m1[, .(
   q1 = quantile(value, 0.25, na.rm = TRUE),
   q3 = quantile(value, 0.75, na.rm = TRUE)
 ),
-.(variable, exact, DIM, SIZE, NORM, VAR, AGREEMENT)][,moment := 'M1']
+.(variable, exact, DIM, SIZE, NORM, VAR, AGREEMENT)][,moment := 'First moment']
 dplot.m2 = data.m2[, .(
   n = length(value) - sum(is.na(value)),
   m = median(value, na.rm = TRUE),
   q1 = quantile(value, 0.25, na.rm = TRUE),
   q3 = quantile(value, 0.75, na.rm = TRUE)
 ),
-.(variable, exact, DIM, SIZE, NORM, VAR, AGREEMENT)][,moment := 'M2']
+.(variable, exact, DIM, SIZE, NORM, VAR, AGREEMENT)][,moment := 'Second moment']
 dplot = rbind(dplot.m1, dplot.m2)
 
+library(latex2exp)
 ggplot(data=dplot) +
   # geom_hline(yintercept = 0, col = 'red') +
-  geom_boxplot(aes(x=factor(DIM),y=m,fill=factor(VAR))) +
-  facet_grid(moment+VAR~variable, scales = 'free_y') +
+  geom_boxplot(aes(x=factor(DIM),y=m,fill=variable)) +
+  facet_grid(moment+VAR~factor(NORM), scales = 'free_y') +
   theme_minimal() +
   scale_y_continuous(trans = 'log', breaks = 10^c(-4, -3,-2,-1,0)) +
-  labs(y = 'Error (logarithmic scale)')
+  labs(y = 'Absolute error (logarithmic scale)') +
+  theme(legend.position = 'top') +
+  labs(fill = 'Method:', x = latex2exp::TeX("Dimension ($\\delta$)"))
+
+l_lambda = as_labeller(function(string) TeX(sprintf("$\\lambda = %s$", string)), 
+                       default = label_parsed)
+l_nu = as_labeller(function(string) TeX(sprintf("$\\nu = %s$", string)), 
+                       default = label_parsed)
+
+p1 = ggplot(data=dplot.m1) +
+  # geom_hline(yintercept = 0, col = 'red') +
+  geom_boxplot(aes(x=factor(DIM),y=m,fill=variable), width=0.75) +
+  facet_grid(VAR~NORM, scales = 'free_y', labeller = labeller(NORM = l_lambda,
+                                                              VAR = l_nu)) +
+  theme_minimal() +
+  scale_y_continuous(trans = 'log', breaks = 10^c(-4, -3,-2,-1,0), limits = c(10^-3.5, 10^0.8)) +
+  theme(legend.position = 'none', panel.spacing.y = unit(1, 'lines')) +
+  labs(fill = 'Method:', x = "Dimension (d)", subtitle = 'First moment',
+       y = 'Absolute error (logarithmic scale)')
+
+p2 = ggplot(data=dplot.m2) +
+  # geom_hline(yintercept = 0, col = 'red') +
+  geom_boxplot(aes(x=factor(DIM),y=m,fill=variable), width=0.75) +
+  facet_grid(VAR~NORM, scales = 'free_y', labeller = labeller(NORM = l_lambda,
+                                                              VAR = l_nu)) +
+  theme_minimal() +
+  scale_y_continuous(trans = 'log', breaks = 10^c(-4, -3,-2,-1,0), limits = c(10^-3.5, 10^0.8)) +
+  theme(legend.position = 'bottom', legend.justification = "right", panel.spacing.y = unit(1, 'lines')) +
+  labs(fill = 'Method:', x = "Dimension (d)", subtitle = 'Second moment',
+       y = "")
+
+library(egg)
+g = ggarrange(p1, p2, nrow = 1)
+ggsave(g, width = 10, height = 6, filename = 'mvfigure.pdf')
 
 
-
-ggplot(data=dplot) +
-  geom_hline(yintercept = 0, col = 'red') +
-  geom_boxplot(aes(x=variable,y=m,fill=factor(NORM))) +
-  facet_grid(DIM~VAR, scales = 'free_y') +
-  theme_minimal()
-
-ggplot(data=dplot) +
-  geom_hline(yintercept = 0, col = 'red') +
-  geom_boxplot(aes(x=variable,y=m,fill=exact)) +
-  facet_grid(DIM~SIZE, scales = 'free_y') +
-  theme_minimal()
-
-ggplot(data=dplot) +
-  geom_hline(yintercept = 0, col = 'red') +
-  geom_boxplot(aes(x=variable,y=m,fill=factor(VAR))) +
-  facet_grid(SIZE~NORM, scales = 'free_y') +
-  theme_minimal()
-
-ggplot(data=dplot) +
-  geom_hline(yintercept = 0, col = 'red') +
-  geom_boxplot(aes(x=variable,y=m)) +
-  facet_grid(VAR~NORM, scales = 'free_y') +
-  theme_minimal()
-
+# ggplot(data=dplot) +
+#   geom_hline(yintercept = 0, col = 'red') +
+#   geom_boxplot(aes(x=variable,y=m,fill=factor(NORM))) +
+#   facet_grid(DIM~VAR, scales = 'free_y') +
+#   theme_minimal()
+# 
+# ggplot(data=dplot) +
+#   geom_hline(yintercept = 0, col = 'red') +
+#   geom_boxplot(aes(x=variable,y=m,fill=exact)) +
+#   facet_grid(DIM~SIZE, scales = 'free_y') +
+#   theme_minimal()
+# 
+# ggplot(data=dplot) +
+#   geom_hline(yintercept = 0, col = 'red') +
+#   geom_boxplot(aes(x=variable,y=m,fill=factor(VAR))) +
+#   facet_grid(SIZE~NORM, scales = 'free_y') +
+#   theme_minimal()
+# 
+# ggplot(data=dplot) +
+#   geom_hline(yintercept = 0, col = 'red') +
+#   geom_boxplot(aes(x=variable,y=m)) +
+#   facet_grid(VAR~NORM, scales = 'free_y') +
+#   theme_minimal()
+# 
