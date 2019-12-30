@@ -63,8 +63,6 @@ tab.m = t(sapply(fit, function(fit_){
 colnames(tab.m) = c('First moment', 'Second moment')
 
 
-knitr::kable(tab.m, format = 'latex')
-
 library(microbenchmark)
 m.res = microbenchmark(fit_mc(), fit_mc.av(), fit_qmc(), fit_mcmc(), fit_hmc())
 tm = tapply(m.res$time, m.res$expr, mean)
