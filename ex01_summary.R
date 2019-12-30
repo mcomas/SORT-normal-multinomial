@@ -25,13 +25,10 @@ data = rbindlist(lapply(fls, function(fl){
   d
 }))
 
-dplot = data[, .(m = mean(value)), .(variable, N, n, s)]
+dplot = data[, .(m = mean(value)), .(variable, N, n, s)][,variable := factor(variable, 
+                                                                             levels = c('dm', 'lrnm-laplace', 'lrnm-dm'))]
 
 library(ggplot2)
-# ggplot(data=data) +
-#   geom_boxplot(aes(x=factor(n),y=value, fill=variable), position=position_dodge()) +
-#   facet_wrap(~s, scale = 'free_y') +
-#   theme_minimal()
 
 l_s = as_labeller(function(string) sprintf("Scenario %s", string))
 g = ggplot(data=dplot) +
@@ -45,6 +42,7 @@ g = ggplot(data=dplot) +
                     labels=c("DM", "LNM (SP1)", "LNM (SP2)"))
 ggsave('ex01-multinomial.pdf', g, width = 7, height = 5.25)
 
+########
 ## Times 
 times = rbindlist(lapply(fls, function(fl){
   # print(fl)
@@ -67,4 +65,8 @@ times = rbindlist(lapply(fls, function(fl){
   d[,seed := as.numeric(sub(pattern_build, "\\4", PATTERN))]
   d
 }))
-dcast(times[,.(m = mean(value)), .(variable, s)], s~variable)
+ex01_times = dcast(times[,.(m = sprintf("%0.1f [%0.1f, %0.1f]", median(value),
+                                        quantile(value, 0.25),
+                                        quantile(value, 0.75))), .(variable, s)], s~variable)
+
+save(times, ex01_times, file = 'ex01-multinomial.RData')

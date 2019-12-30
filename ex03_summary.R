@@ -48,7 +48,8 @@ data = rbindlist(lapply(fls, function(fl){
   d
 }))
 
-dplot = data[, .(m = mean(value)), .(method, variable, size, s)]
+dplot = data[, .(m = mean(value)), .(method, variable, size, s)][,method := factor(method, 
+                                                                                   levels = c('dm', 'lrnm-laplace', 'lrnm-dm'))]
 
 library(ggplot2)
 dplot$variable = factor(dplot$variable, levels = c('paired.dist', 'cov.frobenius', 'stress'),
@@ -74,3 +75,32 @@ g = ggplot(data=dplot) +
                      labels=c("DM", "LNM (SP1)", 'LNM (SP2)'))
 
 ggsave('ex03-parliament.pdf', g, width = 6, height = 7)
+
+########
+## Times 
+times = rbindlist(lapply(fls, function(fl){
+  # print(fl)
+  load(file.path(PATH, fl))
+  
+  PATTERN = gsub('.RData', '', fl)
+  ld = lapply(list(
+    'dm' = 'dm',
+    'lrnm-dm' = 'lrnm-dm',
+    'lrnm-laplace' = 'lrnm-laplace'
+  ), function(v)
+    sapply(RESULTS, function(res, v)
+      res$times[[v]][1], v))
+  
+  d = as.data.table(ld)
+  d = melt(d, measure.vars = names(ld))
+  d[,n := as.integer(sub(pattern_build, "\\1", PATTERN))]
+  d[,s := as.numeric(sub(pattern_build, "\\2", PATTERN))]
+  d[,seed := as.numeric(sub(pattern_build, "\\3", PATTERN))]
+  d
+}))
+ex03_times = dcast(times[,.(m = sprintf("%0.1f [%0.1f, %0.1f]", median(value),
+                                        quantile(value, 0.25),
+                                        quantile(value, 0.75))), .(variable, s)], s~variable)
+
+save(times, ex03_times, file = 'ex03-parliament.RData')
+
