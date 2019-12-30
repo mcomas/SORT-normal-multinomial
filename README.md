@@ -7,6 +7,7 @@ This repository contains the scripts for the article Modelling count data using 
 
 The R script `installing_packages.R` contains commands to install the packages used in the simulations. If you already have the correct versions of each package you don't need to execute this script.
 
+* _unidimensional_example_: unidimensional example
 * _comparison_: multidimensional examples
 * _ex01_: Multinomial simulation
 * _ex02_: Hardy-Weinberg simulation
