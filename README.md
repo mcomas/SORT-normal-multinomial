@@ -13,7 +13,6 @@ The R script `installing_packages.R` contains commands to install the packages u
 * _ex02_: Hardy-Weinberg simulation
 * _ex03_: Catalan elections simulation
 
-
 ## Session info
 
 ```
