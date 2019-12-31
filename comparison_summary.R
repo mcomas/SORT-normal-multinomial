@@ -83,29 +83,29 @@ l_nu = as_labeller(function(string) TeX(sprintf("$\\nu = %s$", string)),
 
 p1 = ggplot(data=dplot.m1) +
   # geom_hline(yintercept = 0, col = 'red') +
-  geom_boxplot(aes(x=factor(DIM),y=m,fill=variable), width=0.75) +
+  geom_boxplot(aes(x=factor(DIM),y=m,fill=variable)) +
   facet_grid(VAR~NORM, scales = 'free_y', labeller = labeller(NORM = l_lambda,
                                                               VAR = l_nu)) +
   theme_minimal() +
   scale_y_continuous(trans = 'log', breaks = 10^c(-4, -3,-2,-1,0), limits = c(10^-3.5, 10^0.8)) +
-  theme(legend.position = 'none', panel.spacing.y = unit(1, 'lines')) +
-  labs(fill = 'Method:', x = "Dimension (d)", subtitle = 'First moment',
+  theme(legend.position = 'right', legend.justification = "right", panel.spacing.y = unit(1, 'lines')) +
+  labs(fill = 'Method:', x = "", subtitle = 'First moment',
        y = 'Absolute error (logarithmic scale)')
 
 p2 = ggplot(data=dplot.m2) +
   # geom_hline(yintercept = 0, col = 'red') +
-  geom_boxplot(aes(x=factor(DIM),y=m,fill=variable), width=0.75) +
+  geom_boxplot(aes(x=factor(DIM),y=m,fill=variable)) +
   facet_grid(VAR~NORM, scales = 'free_y', labeller = labeller(NORM = l_lambda,
                                                               VAR = l_nu)) +
   theme_minimal() +
   scale_y_continuous(trans = 'log', breaks = 10^c(-4, -3,-2,-1,0), limits = c(10^-3.5, 10^0.8)) +
-  theme(legend.position = 'bottom', legend.justification = "right", panel.spacing.y = unit(1, 'lines')) +
+  theme(legend.position = 'none', legend.justification = "right", panel.spacing.y = unit(1, 'lines')) +
   labs(fill = 'Method:', x = "Dimension (d)", subtitle = 'Second moment',
-       y = "")
+       y = "Absolute error (logarithmic scale)")
 
 library(egg)
-g = ggarrange(p1, p2, nrow = 1)
-ggsave(g, width = 10, height = 6, filename = 'mvfigure.pdf')
+g = ggarrange(p1, p2, ncol = 1)
+ggsave(g, width = 7, height = 9.5, filename = 'mvfigure.pdf')
 
 
 # ggplot(data=dplot) +
